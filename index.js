@@ -1,2 +1,2 @@
-const EvolutionManager = require('./src/evolutionManager');
+const EvolutionManager = require("./src/evolutionManager");
 module.exports = EvolutionManager;
