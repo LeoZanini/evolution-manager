@@ -1,5 +1,5 @@
 {
-  "name": "evolution-manager",
+  "name": "evolution-manager-lz",
   "version": "1.0.0",
   "description": "Wrapper for Evolution API to manage WhatsApp instances",
   "main": "index.js",
