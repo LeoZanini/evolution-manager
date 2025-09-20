@@ -1,335 +1,268 @@
-# Evolution Manager
+# Evolution Manager LZ
 
-Wrapper moderno para Evolution API que permite gerenciar instâncias do WhatsApp de forma simples e eficiente em aplicações Node.js e Next.js.
+[![npm version](https://badge.fury.io/js/evolution-manager-lz.svg)](https://badge.fury.io/js/evolution-manager-lz)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 📦 Instalação
+Modern ES Module wrapper for [Evolution API](https://doc.evolution-api.com) to manage WhatsApp instances with full TypeScript support.
+
+## ✨ Features
+
+- 🚀 **ES Modules**: Pure ES6 modules, no CommonJS
+- 🔷 **TypeScript**: Complete type definitions included
+- 📱 **Full WhatsApp API**: Complete wrapper for Evolution API
+- 🎯 **Modern Syntax**: Uses latest JavaScript features
+- 🔐 **Secure**: Built-in API key authentication
+- 📦 **Lightweight**: Zero dependencies except axios
+- 🔄 **Backward Compatible**: Legacy method names supported
+
+## 📦 Installation
 
 ```bash
-npm install evolution-manager
-# ou
-yarn add evolution-manager
+npm install evolution-manager-lz
 ```
 
-## 🚀 Uso Básico
-
-### Node.js / CommonJS
+## 🚀 Quick Start
 
 ```javascript
-const EvolutionManager = require('evolution-manager');
+import { EvolutionManager } from "evolution-manager-lz";
 
-const manager = new EvolutionManager('https://api.evolution.com', 'your-api-key');
+const manager = new EvolutionManager(
+  "https://your-evolution-api.com",
+  "your-api-key"
+);
 
-// Listar instâncias
+// Create a new WhatsApp instance
+const instance = await manager.createInstance("my-whatsapp");
+
+// Connect and get QR code
+const qrCode = await manager.connectInstance("my-whatsapp");
+console.log("QR Code:", qrCode.base64);
+
+// Send a message
+await manager.sendMessage("my-whatsapp", "5511999999999", "Hello World!");
+```
+
+## 📚 API Reference
+
+### Instance Management
+
+```javascript
+// Create a new instance
+const instance = await manager.createInstance(
+  "instanceName",
+  "WHATSAPP-BAILEYS"
+);
+
+// List all instances
+const instances = await manager.listInstances();
+
+// Get specific instance
+const instance = await manager.getInstance("instanceName");
+
+// Connect instance (get QR code)
+const qrCode = await manager.connectInstance("instanceName");
+
+// Disconnect instance
+await manager.disconnectInstance("instanceName");
+
+// Delete instance
+await manager.deleteInstance("instanceName");
+
+// Get instance status
+const status = await manager.getInstanceStatus("instanceName");
+```
+
+### Messaging
+
+```javascript
+// Send text message
+await manager.sendMessage("instanceName", "5511999999999", "Hello!");
+
+// Send media (image, video, audio, document)
+await manager.sendMedia(
+  "instanceName",
+  "5511999999999",
+  "https://example.com/image.jpg",
+  "image",
+  "Caption"
+);
+
+// Mark message as read
+await manager.markAsRead(
+  "instanceName",
+  "5511999999999@s.whatsapp.net",
+  false,
+  "messageId"
+);
+```
+
+### Chat Management
+
+```javascript
+// Get chat messages
+const messages = await manager.getChatMessages(
+  "instanceName",
+  "5511999999999@s.whatsapp.net",
+  50
+);
+
+// Get all chats
+const chats = await manager.getChats("instanceName");
+
+// Get contacts
+const contacts = await manager.getContacts("instanceName");
+```
+
+### Settings & Configuration
+
+```javascript
+// Set instance settings
+await manager.setInstanceSettings("instanceName", {
+  rejectCall: true,
+  alwaysOnline: true,
+  readMessages: true,
+  readStatus: true,
+});
+
+// Get instance settings
+const settings = await manager.getInstanceSettings("instanceName");
+
+// Set webhook
+await manager.setWebhook("instanceName", "https://your-webhook.com/webhook", [
+  "message",
+  "status",
+]);
+```
+
+### Utilities
+
+```javascript
+// Get API status
+const status = await manager.getApiStatus();
+
+// Get instance profile
+const profile = await manager.getProfile("instanceName");
+```
+
+## 🔧 Configuration Options
+
+### Instance Settings
+
+```javascript
+const settings = {
+  rejectCall: boolean, // Auto-reject calls
+  msgCall: string, // Message when rejecting calls
+  groupsIgnore: boolean, // Ignore group messages
+  alwaysOnline: boolean, // Always show as online
+  readMessages: boolean, // Auto-read messages
+  readStatus: boolean, // Auto-read status updates
+  syncFullHistory: boolean, // Sync full chat history
+  wavoipToken: string, // VoIP token
+};
+```
+
+### Media Types
+
+- `image` - JPEG, PNG, GIF images
+- `video` - MP4, AVI, MOV videos
+- `audio` - MP3, WAV, OGG audio files
+- `document` - PDF, DOC, XLS documents
+
+### Integration Types
+
+- `WHATSAPP-BAILEYS` (default) - Using Baileys library
+- `WHATSAPP-WEB-JS` - Using whatsapp-web.js library
+
+## 🔄 Legacy Compatibility
+
+For backward compatibility, legacy method names are still supported:
+
+```javascript
+// Legacy methods (still work)
 const instances = await manager.list();
-
-// Buscar uma instância específica
-const instance = await manager.get('minha-instancia');
-
-// Criar nova instância
-const newInstance = await manager.create('nova-instancia');
+const instance = await manager.get("instanceName");
+const newInstance = await manager.create("instanceName");
+const qrCode = await manager.connect("instanceName");
+await manager.disconnect("instanceName");
+const status = await manager.getStatus();
 ```
 
-### ES Modules / TypeScript
+## 📝 TypeScript Support
+
+Full TypeScript definitions are included:
 
 ```typescript
-import EvolutionManager from 'evolution-manager';
+import {
+  EvolutionManager,
+  WhatsAppInstance,
+  CreateInstanceResponse,
+} from "evolution-manager-lz";
 
-const manager = new EvolutionManager('https://api.evolution.com', 'your-api-key');
-
-// Com tipos TypeScript
-const instances: InstanceData[] = await manager.list();
-const instance: InstanceData = await manager.get('minha-instancia');
-const newInstance: CreateInstanceResponse = await manager.create('nova-instancia');
-```
-
-## 🔥 Uso em Next.js
-
-### 1. Em API Routes
-
-Crie uma API route no Next.js (`pages/api/instances/index.js` ou `app/api/instances/route.js`):
-
-```javascript
-// pages/api/instances/index.js
-import { NextEvolutionAPI } from 'evolution-manager/nextjs';
-
-const evolutionAPI = new NextEvolutionAPI(
-  process.env.EVOLUTION_API_URL,
-  process.env.EVOLUTION_API_KEY
-);
-
-export default async function handler(req, res) {
-  switch (req.method) {
-    case 'GET':
-      return evolutionAPI.listInstances(req, res);
-    case 'POST':
-      return evolutionAPI.createInstance(req, res);
-    default:
-      return res.status(405).json({ error: 'Method not allowed' });
-  }
-}
-```
-
-Para App Router (Next.js 13+):
-
-```javascript
-// app/api/instances/route.js
-import { NextEvolutionAPI } from 'evolution-manager/nextjs';
-
-const evolutionAPI = new NextEvolutionAPI(
-  process.env.EVOLUTION_API_URL,
-  process.env.EVOLUTION_API_KEY
-);
-
-export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const instanceName = searchParams.get('instanceName');
-  
-  if (instanceName) {
-    return evolutionAPI.getInstance({ query: { instanceName } }, { status: (code) => ({ json: (data) => Response.json(data, { status: code }) }) });
-  }
-  
-  return evolutionAPI.listInstances({}, { status: (code) => ({ json: (data) => Response.json(data, { status: code }) }) });
-}
-
-export async function POST(request) {
-  const body = await request.json();
-  return evolutionAPI.createInstance({ body }, { status: (code) => ({ json: (data) => Response.json(data, { status: code }) }) });
-}
-```
-
-### 2. Usando o Hook React
-
-No seu componente React:
-
-```jsx
-// components/InstanceManager.jsx
-import { useEvolutionManager } from 'evolution-manager/hooks';
-import { useState } from 'react';
-
-export default function InstanceManager() {
-  const [instanceName, setInstanceName] = useState('');
-  const {
-    loading,
-    error,
-    getInstance,
-    createInstance,
-    listInstances
-  } = useEvolutionManager(
-    process.env.NEXT_PUBLIC_EVOLUTION_API_URL,
-    process.env.NEXT_PUBLIC_EVOLUTION_API_KEY
-  );
-
-  const handleGetInstance = async () => {
-    const instance = await getInstance(instanceName);
-    console.log('Instance:', instance);
-  };
-
-  const handleCreateInstance = async () => {
-    const newInstance = await createInstance(instanceName);
-    console.log('Created:', newInstance);
-  };
-
-  const handleListInstances = async () => {
-    const instances = await listInstances();
-    console.log('All instances:', instances);
-  };
-
-  if (loading) return <div>Carregando...</div>;
-  if (error) return <div>Erro: {error.message}</div>;
-
-  return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Gerenciar Instâncias</h2>
-      
-      <div className="mb-4">
-        <input
-          type="text"
-          value={instanceName}
-          onChange={(e) => setInstanceName(e.target.value)}
-          placeholder="Nome da instância"
-          className="border p-2 mr-2"
-        />
-      </div>
-
-      <div className="space-x-2">
-        <button 
-          onClick={handleGetInstance}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Buscar Instância
-        </button>
-        
-        <button 
-          onClick={handleCreateInstance}
-          className="bg-green-500 text-white px-4 py-2 rounded"
-        >
-          Criar Instância
-        </button>
-        
-        <button 
-          onClick={handleListInstances}
-          className="bg-gray-500 text-white px-4 py-2 rounded"
-        >
-          Listar Todas
-        </button>
-      </div>
-    </div>
-  );
-}
-```
-
-### 3. Via API Routes (Recomendado para Produção)
-
-Para manter as credenciais seguras no servidor:
-
-```javascript
-// lib/evolutionClient.js (Server-side)
-import EvolutionManager from 'evolution-manager';
-
-export const evolutionManager = new EvolutionManager(
-  process.env.EVOLUTION_API_URL,
-  process.env.EVOLUTION_API_KEY
+const manager: EvolutionManager = new EvolutionManager(baseUrl, apiKey);
+const instances: WhatsAppInstance[] = await manager.listInstances();
+const newInstance: CreateInstanceResponse = await manager.createInstance(
+  "test"
 );
 ```
 
-```jsx
-// components/InstanceList.jsx (Client-side)
-import { useState, useEffect } from 'react';
+### Available Types
 
-export default function InstanceList() {
-  const [instances, setInstances] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+- `EvolutionManager` - Main class
+- `WhatsAppInstance` - Instance object structure
+- `CreateInstanceResponse` - Response from instance creation
+- `ConnectionResponse` - QR code and connection data
+- `MessageResponse` - Message send response
+- `InstanceSettings` - Configuration options
+- `EvolutionApiStatus` - API status response
 
-  useEffect(() => {
-    fetchInstances();
-  }, []);
+## 🧪 Testing
 
-  const fetchInstances = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/instances');
-      const data = await response.json();
-      
-      if (data.success) {
-        setInstances(data.data);
-      } else {
-        setError(data.error);
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createInstance = async (name) => {
-    try {
-      const response = await fetch('/api/instances', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ instanceName: name }),
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        await fetchInstances(); // Atualiza a lista
-      } else {
-        setError(data.error);
-      }
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  if (loading) return <div>Carregando instâncias...</div>;
-  if (error) return <div>Erro: {error}</div>;
-
-  return (
-    <div>
-      <h2>Instâncias WhatsApp</h2>
-      <ul>
-        {instances.map((instance) => (
-          <li key={instance.id}>
-            {instance.name} - {instance.status}
-          </li>
-        ))}
-      </ul>
-      
-      <button onClick={() => createInstance('nova-instancia')}>
-        Criar Nova Instância
-      </button>
-    </div>
-  );
-}
-```
-
-## 🔧 Configuração de Ambiente
-
-Crie um arquivo `.env.local` na raiz do seu projeto Next.js:
-
-```env
-# Para uso server-side (API Routes)
-EVOLUTION_API_URL=https://sua-api-evolution.com
-EVOLUTION_API_KEY=sua-chave-api
-
-# Para uso client-side (apenas se necessário)
-NEXT_PUBLIC_EVOLUTION_API_URL=https://sua-api-evolution.com
-NEXT_PUBLIC_EVOLUTION_API_KEY=sua-chave-api
-```
-
-⚠️ **Importante**: Mantenha suas credenciais no servidor sempre que possível. Use as variáveis `NEXT_PUBLIC_*` apenas quando absolutamente necessário.
-
-## 📋 API Reference
-
-### EvolutionManager
-
-#### Constructor
-```typescript
-new EvolutionManager(baseUrl: string, apiKey: string)
-```
-
-#### Métodos
-- `get(instanceName: string): Promise<InstanceData>` - Busca uma instância específica
-- `create(instanceName: string): Promise<CreateInstanceResponse>` - Cria uma nova instância
-- `list(): Promise<InstanceData[]>` - Lista todas as instâncias
-
-### useEvolutionManager Hook
-
-```typescript
-const {
-  manager,      // Instância do EvolutionManager
-  loading,      // Estado de carregamento
-  error,        // Último erro ocorrido
-  getInstance,  // Função para buscar instância
-  createInstance, // Função para criar instância
-  listInstances   // Função para listar instâncias
-} = useEvolutionManager(baseUrl, apiKey);
-```
-
-### NextEvolutionAPI
-
-Wrapper para API Routes do Next.js com tratamento automático de erros e respostas padronizadas.
-
-## 🧪 Testes
-
-Execute os testes:
+Run the test suite:
 
 ```bash
 npm test
 ```
 
-## 📄 Licença
+Test with your own Evolution API:
 
-MIT
+```javascript
+// test-final.js
+import { EvolutionManager } from "./src/evolution-manager.js";
 
-## 🤝 Contribuição
+const manager = new EvolutionManager("https://your-api.com", "your-key");
+const instances = await manager.listInstances();
+console.log(instances);
+```
 
-Contribuições são bem-vindas! Abra uma issue ou envie um pull request.
+## 🌍 Environment Support
 
-## 📞 Suporte
+- **Node.js**: 16.0.0+ (ES Modules support required)
+- **Browsers**: Modern browsers with ES6 module support
+- **TypeScript**: 4.0+
 
-Para suporte, abra uma issue no [GitHub](https://github.com/LeoZanini/evolution-manager/issues).
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+## 📞 Support
+
+- [Evolution API Documentation](https://doc.evolution-api.com)
+- [GitHub Issues](https://github.com/LeoZanini/evolution-manager/issues)
+- [Discord Community](https://discord.gg/evolution-api)
+
+## 🔗 Related Projects
+
+- [Evolution API](https://github.com/EvolutionAPI/evolution-api) - The main Evolution API project
+- [Baileys](https://github.com/WhiskeySockets/Baileys) - WhatsApp Web API library
+
+---
+
+Made with ❤️ by [Leo Zanini](https://github.com/LeoZanini)
