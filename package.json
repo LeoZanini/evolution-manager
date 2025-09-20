@@ -1,6 +1,6 @@
 {
   "name": "evolution-manager-lz",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Modern ES Module wrapper for Evolution API to manage WhatsApp instances",
   "type": "module",
   "main": "src/evolution-manager.js",
