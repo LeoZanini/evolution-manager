@@ -1,4 +1,4 @@
-import { EvolutionManager } from "../src/evolution-manager.js";
+import { EvolutionManager } from "../src/hooks/evolution-manager.js";
 import axios from "axios";
 
 // Mock do axios para ES modules

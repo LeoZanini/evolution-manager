@@ -1,4 +1,4 @@
-import { EvolutionManager } from "./src/evolution-manager.js";
+import { EvolutionManager } from "./src/hooks/evolution-manager.js";
 
 // Suas credenciais
 const BASE_URL = "https://evolution.kodama.solutions/";
