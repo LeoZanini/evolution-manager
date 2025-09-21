@@ -1,10 +1,25 @@
 import { default as React } from 'react';
-import { Contact } from '../types';
 
+interface Contact {
+    id: string;
+    name: string;
+    phone: string;
+    profilePicture?: string;
+    isOnline: boolean;
+    lastSeen?: Date;
+    isBlocked?: boolean;
+    isGroup?: boolean;
+    groupParticipants?: number;
+}
 interface ContactListProps {
-    contacts: Contact[];
-    isLoading?: boolean;
-    onContactClick?: (contact: Contact) => void;
+    instanceId: string;
+    contacts?: Contact[];
+    loading?: boolean;
+    onContactSelect?: (contact: Contact) => void;
+    onContactAction?: (contactId: string, action: string) => void;
+    showSearch?: boolean;
+    showActions?: boolean;
+    className?: string;
 }
 export declare const ContactList: React.FC<ContactListProps>;
 export {};

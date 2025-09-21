@@ -8,12 +8,18 @@ export { useTheme } from "./hooks/useTheme";
 // Evolution Manager Class
 export { default as EvolutionManager } from "./hooks/EvolutionManager";
 
-// Components
+// High-Level Components (Canivete Suíço)
+export { InstanceManager } from "./components/InstanceManager";
+export { InstanceController } from "./components/InstanceController";
+
+// Base Components
 export { InstanceCard } from "./components/InstanceCard";
 export { ConnectionStatus } from "./components/ConnectionStatus";
 export { MessageList } from "./components/MessageList";
 export { ContactList } from "./components/ContactList";
 export { QRCodeDisplay } from "./components/QRCodeDisplay";
+
+// UI Components
 export { Button } from "./components/ui/Button";
 export { Input } from "./components/ui/Input";
 export { Card } from "./components/ui/Card";

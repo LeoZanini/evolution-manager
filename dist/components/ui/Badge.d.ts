@@ -1,8 +1,9 @@
 import { default as React } from 'react';
 
-interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-    variant?: "primary" | "secondary" | "success" | "warning" | "danger";
-    size?: "sm" | "md" | "lg";
+interface BadgeProps {
+    variant?: "success" | "warning" | "danger" | "default";
+    children: React.ReactNode;
+    className?: string;
 }
 export declare const Badge: React.FC<BadgeProps>;
 export {};

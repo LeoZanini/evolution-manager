@@ -1,106 +1,19 @@
 import React from "react";
-import styled from "styled-components";
-import { useTheme } from "../hooks/useTheme";
 import { Card } from "./ui/Card";
 import { Button } from "./ui/Button";
 import { Badge } from "./ui/Badge";
-import type { Instance } from "../types";
+import { getStatusStyles, getStatusText } from "../utils/statusUtils";
+import { InstanceData } from "../types";
+import clsx from "clsx";
 
 interface InstanceCardProps {
-  instance: Instance;
+  instance: InstanceData;
   onConnect?: (instanceName: string) => void;
   onDisconnect?: (instanceName: string) => void;
   onDelete?: (instanceName: string) => void;
   onViewQR?: (instanceName: string) => void;
+  onSettings?: (instanceName: string) => void;
 }
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-`;
-
-const InstanceInfo = styled.div`
-  flex: 1;
-`;
-
-const InstanceName = styled.h3<{ $theme: any }>`
-  margin: 0 0 8px 0;
-  color: ${(props) => props.$theme.colors.text};
-  font-family: ${(props) => props.$theme.fonts.primary};
-  font-size: 18px;
-  font-weight: 600;
-`;
-
-const InstanceDetails = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-`;
-
-const DetailItem = styled.div<{ $theme: any }>`
-  font-size: 14px;
-  color: ${(props) => props.$theme.colors.textSecondary};
-  font-family: ${(props) => props.$theme.fonts.primary};
-
-  strong {
-    color: ${(props) => props.$theme.colors.text};
-    font-weight: 500;
-  }
-`;
-
-const StatusContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-`;
-
-const StatusIndicator = styled.div<{ $status: string; $theme: any }>`
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: ${(props) => {
-    switch (props.$status) {
-      case "connected":
-        return props.$theme.colors.success;
-      case "connecting":
-        return props.$theme.colors.warning;
-      default:
-        return props.$theme.colors.danger;
-    }
-  }};
-
-  ${(props) =>
-    props.$status === "connecting" &&
-    `
-    animation: pulse 2s infinite;
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-  `}
-`;
-
-const Actions = styled.div`
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-`;
-
-const Divider = styled.hr<{ $theme: any }>`
-  border: none;
-  height: 1px;
-  background: ${(props) => props.$theme.colors.border};
-  margin: 0;
-`;
 
 export const InstanceCard: React.FC<InstanceCardProps> = ({
   instance,
@@ -108,128 +21,127 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
   onDisconnect,
   onDelete,
   onViewQR,
+  onSettings,
 }) => {
-  const { theme } = useTheme();
+  const statusStyles = getStatusStyles(instance.status || "disconnected");
+  const statusText = getStatusText(instance.status || "disconnected");
 
-  const getStatusVariant = () => {
-    switch (instance.status) {
+  const getBadgeVariant = (status: string) => {
+    switch (status) {
       case "connected":
         return "success";
       case "connecting":
         return "warning";
-      default:
+      case "disconnected":
         return "danger";
-    }
-  };
-
-  const getStatusText = () => {
-    switch (instance.status) {
-      case "connected":
-        return "Conectado";
-      case "connecting":
-        return "Conectando...";
       default:
-        return "Desconectado";
+        return "default";
     }
   };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const canConnect = instance.status === "disconnected";
-  const canDisconnect = instance.status === "connected";
-  const canViewQR = instance.status === "disconnected";
 
   return (
-    <Card variant="elevated" padding="lg">
-      <Container>
-        <Header>
-          <InstanceInfo>
-            <InstanceName $theme={theme}>{instance.name}</InstanceName>
-            <InstanceDetails>
-              <DetailItem $theme={theme}>
-                <strong>Webhook:</strong>{" "}
-                {instance.webhook || "Não configurado"}
-              </DetailItem>
-              <DetailItem $theme={theme}>
-                <strong>Criado em:</strong> {formatDate(instance.createdAt)}
-              </DetailItem>
-              {instance.lastConnection && (
-                <DetailItem $theme={theme}>
-                  <strong>Última conexão:</strong>{" "}
-                  {formatDate(instance.lastConnection)}
-                </DetailItem>
-              )}
-            </InstanceDetails>
-          </InstanceInfo>
+    <Card className="relative">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+            {instance.name}
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {instance.integration || "WHATSAPP-BAILEYS"}
+          </p>
+        </div>
 
-          <StatusContainer>
-            <StatusIndicator $status={instance.status} $theme={theme} />
-            <Badge variant={getStatusVariant()} size="sm">
-              {getStatusText()}
-            </Badge>
-          </StatusContainer>
-        </Header>
+        <Badge variant={getBadgeVariant(instance.status || "disconnected")}>
+          {statusText}
+        </Badge>
+      </div>
 
-        <Divider $theme={theme} />
+      {/* Status Indicator */}
+      <div
+        className={clsx(
+          "flex items-center gap-2 p-3 rounded-lg mb-4",
+          statusStyles.bg,
+          statusStyles.border,
+          "border"
+        )}
+      >
+        <div className={clsx("w-2 h-2 rounded-full", statusStyles.badge)} />
+        <span className={clsx("text-sm", statusStyles.text)}>{statusText}</span>
+      </div>
 
-        <Actions>
-          {canConnect && onConnect && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => onConnect(instance.name)}
-            >
-              Conectar
-            </Button>
-          )}
+      {/* Instance Info */}
+      <div className="space-y-2 mb-4">
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-500 dark:text-gray-400">Integração:</span>
+          <span className="text-gray-900 dark:text-white">
+            {instance.integration || "WHATSAPP-BAILEYS"}
+          </span>
+        </div>
 
-          {canDisconnect && onDisconnect && (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => onDisconnect(instance.name)}
-            >
-              Desconectar
-            </Button>
-          )}
+        {instance.connectionState && (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-500 dark:text-gray-400">Estado:</span>
+            <span className="text-gray-900 dark:text-white">
+              {instance.connectionState}
+            </span>
+          </div>
+        )}
+      </div>
 
-          {canViewQR && onViewQR && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => onViewQR(instance.name)}
-            >
-              Ver QR Code
-            </Button>
-          )}
+      {/* Actions */}
+      <div className="flex flex-wrap gap-2">
+        {instance.status === "disconnected" && onConnect && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => onConnect(instance.name)}
+          >
+            🔗 Conectar
+          </Button>
+        )}
 
-          {onDelete && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    `Tem certeza que deseja excluir a instância "${instance.name}"?`
-                  )
-                ) {
-                  onDelete(instance.name);
-                }
-              }}
-            >
-              Excluir
-            </Button>
-          )}
-        </Actions>
-      </Container>
+        {instance.status === "connected" && onDisconnect && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => onDisconnect(instance.name)}
+          >
+            ⏸️ Desconectar
+          </Button>
+        )}
+
+        {onViewQR && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => onViewQR(instance.name)}
+          >
+            📱 QR Code
+          </Button>
+        )}
+
+        {onSettings && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onSettings(instance.name)}
+          >
+            ⚙️ Config
+          </Button>
+        )}
+
+        {onDelete && (
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => onDelete(instance.name)}
+            className="ml-auto"
+          >
+            🗑️ Deletar
+          </Button>
+        )}
+      </div>
     </Card>
   );
 };

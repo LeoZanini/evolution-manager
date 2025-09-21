@@ -1,261 +1,53 @@
-import React, { useState } from "react";
-import styled from "styled-components";
-import {
-  ThemeProvider,
-  InstanceCard,
-  ConnectionStatus,
-  QRCodeDisplay,
-  MessageList,
-  ContactList,
-  Button,
-  Input,
-  Modal,
-  useTheme,
-  defaultTheme,
-  darkTheme,
-} from "../index";
+import { InstanceManager } from "../components/InstanceManager";
+import { ThemeProvider } from "../providers/ThemeProvider";
+import "../styles/globals.css";
 
-const Container = styled.div<{ $theme: any }>`
-  min-height: 100vh;
-  background: ${(props) => props.$theme.colors.background};
-  padding: 20px;
-`;
-
-const Header = styled.header<{ $theme: any }>`
-  background: ${(props) => props.$theme.colors.surface};
-  border: 1px solid ${(props) => props.$theme.colors.border};
-  border-radius: ${(props) => props.$theme.borderRadius};
-  padding: 20px;
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const Title = styled.h1<{ $theme: any }>`
-  margin: 0;
-  color: ${(props) => props.$theme.colors.text};
-  font-family: ${(props) => props.$theme.fonts.primary};
-`;
-
-const ThemeToggle = styled.div`
-  display: flex;
-  gap: 8px;
-  align-items: center;
-`;
-
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 20px;
-`;
-
-const Section = styled.section<{ $theme: any }>`
-  background: ${(props) => props.$theme.colors.surface};
-  border: 1px solid ${(props) => props.$theme.colors.border};
-  border-radius: ${(props) => props.$theme.borderRadius};
-  padding: 20px;
-`;
-
-const SectionTitle = styled.h2<{ $theme: any }>`
-  margin: 0 0 16px 0;
-  color: ${(props) => props.$theme.colors.text};
-  font-family: ${(props) => props.$theme.fonts.primary};
-  font-size: 18px;
-`;
-
-// Dados mock para demonstração
-const mockInstance = {
-  id: "1",
-  name: "Instância Principal",
-  status: "connected" as const,
-  webhook: "https://webhook.exemplo.com",
-  createdAt: new Date("2024-01-15"),
-  lastConnection: new Date(),
-};
-
-const mockMessages = [
-  {
-    id: "1",
-    from: "5511999999999",
-    senderName: "João Silva",
-    content: "Olá! Como você está?",
-    type: "text" as const,
-    timestamp: new Date(),
-    instanceId: "1",
-  },
-  {
-    id: "2",
-    from: "5511888888888",
-    senderName: "Maria Santos",
-    content: "Aqui está o documento que você pediu",
-    type: "document" as const,
-    timestamp: new Date(Date.now() - 30000),
-    instanceId: "1",
-  },
-];
-
-const mockContacts = [
-  {
-    id: "1",
-    name: "João Silva",
-    phone: "5511999999999",
-    isOnline: true,
-    profilePic: "",
-  },
-  {
-    id: "2",
-    name: "Maria Santos",
-    phone: "5511888888888",
-    isOnline: false,
-    profilePic: "",
-  },
-];
-
-const AppContent: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
-  const [showModal, setShowModal] = useState(false);
-  const [showQR, setShowQR] = useState(false);
-
+function App() {
   return (
-    <Container $theme={theme}>
-      <Header $theme={theme}>
-        <Title $theme={theme}>Evolution Manager Demo</Title>
-        <ThemeToggle>
-          <span
-            style={{
-              color: theme.colors.text,
-              fontFamily: theme.fonts.primary,
-            }}
-          >
-            Tema:
-          </span>
-          <Button variant="ghost" size="sm" onClick={toggleTheme}>
-            {theme === darkTheme ? "🌞 Claro" : "🌙 Escuro"}
-          </Button>
-        </ThemeToggle>
-      </Header>
-
-      <Grid>
-        <Section $theme={theme}>
-          <SectionTitle $theme={theme}>Gerenciamento de Instância</SectionTitle>
-          <InstanceCard
-            instance={mockInstance}
-            onConnect={(name) => alert(`Conectando ${name}...`)}
-            onDisconnect={(name) => alert(`Desconectando ${name}...`)}
-            onDelete={(name) => alert(`Excluindo ${name}...`)}
-            onViewQR={() => setShowQR(true)}
-          />
-        </Section>
-
-        <Section $theme={theme}>
-          <SectionTitle $theme={theme}>Status de Conexão</SectionTitle>
-          <ConnectionStatus
-            status="connected"
-            instanceName="Instância Principal"
-            lastUpdate={new Date()}
-            onReconnect={() => alert("Reconectando...")}
-          />
-        </Section>
-
-        <Section $theme={theme}>
-          <SectionTitle $theme={theme}>Lista de Mensagens</SectionTitle>
-          <MessageList
-            messages={mockMessages}
-            onMessageClick={(message) => alert(`Mensagem: ${message.content}`)}
-          />
-        </Section>
-
-        <Section $theme={theme}>
-          <SectionTitle $theme={theme}>Lista de Contatos</SectionTitle>
-          <ContactList
-            contacts={mockContacts}
-            onContactClick={(contact) => alert(`Contato: ${contact.name}`)}
-          />
-        </Section>
-
-        <Section $theme={theme}>
-          <SectionTitle $theme={theme}>Componentes UI</SectionTitle>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-          >
-            <Input
-              label="Nome da Instância"
-              placeholder="Digite o nome..."
-              helperText="Escolha um nome único para sua instância"
-            />
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <Button variant="primary">Primário</Button>
-              <Button variant="secondary">Secundário</Button>
-              <Button variant="danger">Perigo</Button>
-              <Button variant="ghost">Ghost</Button>
-            </div>
-            <Button onClick={() => setShowModal(true)}>Abrir Modal</Button>
+    <ThemeProvider>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              🚀 Evolution Manager
+            </h1>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Gerencie suas instâncias WhatsApp com facilidade
+            </p>
           </div>
-        </Section>
-      </Grid>
+        </header>
 
-      {/* Modal de exemplo */}
-      <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title="Modal de Exemplo"
-        size="md"
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <p
-            style={{
-              color: theme.colors.text,
-              fontFamily: theme.fonts.primary,
+        <main>
+          <InstanceManager
+            baseUrl="http://localhost:8080"
+            apiKey="your-api-key-here"
+            showThemeToggle={true}
+            showCreateButton={true}
+            autoRefresh={true}
+            refreshInterval={5000}
+            maxInstances={10}
+            onInstanceCreated={(name) => {
+              console.log(`Instância criada: ${name}`);
             }}
-          >
-            Este é um exemplo de modal funcionando perfeitamente com o sistema
-            de temas!
-          </p>
-          <div
-            style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}
-          >
-            <Button variant="ghost" onClick={() => setShowModal(false)}>
-              Cancelar
-            </Button>
-            <Button variant="primary" onClick={() => setShowModal(false)}>
-              Confirmar
-            </Button>
+            onInstanceDeleted={(name) => {
+              console.log(`Instância deletada: ${name}`);
+            }}
+            onInstanceConnected={(name) => {
+              console.log(`Instância conectada: ${name}`);
+            }}
+          />
+        </main>
+
+        <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <p className="text-center text-gray-500 dark:text-gray-400">
+              Evolution Manager - Versão 2.0 com Tailwind CSS
+            </p>
           </div>
-        </div>
-      </Modal>
-
-      {/* Modal do QR Code */}
-      <Modal
-        isOpen={showQR}
-        onClose={() => setShowQR(false)}
-        title="QR Code"
-        size="sm"
-      >
-        <QRCodeDisplay
-          qrCode="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-          instanceName="Instância Principal"
-          onRefresh={() => alert("Atualizando QR Code...")}
-        />
-      </Modal>
-    </Container>
-  );
-};
-
-const App: React.FC = () => {
-  const [currentTheme, setCurrentTheme] = useState(defaultTheme);
-
-  const toggleTheme = () => {
-    setCurrentTheme((current) =>
-      current === defaultTheme ? darkTheme : defaultTheme
-    );
-  };
-
-  return (
-    <ThemeProvider theme={currentTheme} toggleTheme={toggleTheme}>
-      <AppContent />
+        </footer>
+      </div>
     </ThemeProvider>
   );
-};
+}
 
 export default App;

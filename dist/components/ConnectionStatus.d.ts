@@ -1,8 +1,8 @@
 import { default as React } from 'react';
 
 interface ConnectionStatusProps {
-    status: "connected" | "disconnected" | "connecting";
-    instanceName?: string;
+    status: string;
+    instanceName: string;
     lastUpdate?: Date;
     onReconnect?: () => void;
 }

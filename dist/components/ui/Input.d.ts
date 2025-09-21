@@ -1,11 +1,9 @@
 import { default as React } from 'react';
 
-interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
-    variant?: "default" | "outlined" | "filled";
-    inputSize?: "sm" | "md" | "lg";
-    error?: boolean;
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string;
     helperText?: string;
+    error?: boolean;
 }
 export declare const Input: React.FC<InputProps>;
 export {};

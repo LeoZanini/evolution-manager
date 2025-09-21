@@ -1,8 +1,9 @@
-# Evolution Manager
+# Evolution Manager Library
 
-[![npm version](https://badge.fury.io/js/evolution-manager.svg)](https://badge.fury.io/js/evolution-manager)
+[![npm version](https://badge.fury.io/js/evolution-manager-library.svg)](https://badge.fury.io/js/evolution-manager-library)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2+-blue.svg)](https://www.typescriptlang.org/)
+[![Tests](https://img.shields.io/badge/Tests-18%20passed-brightgreen.svg)]()
 
 Biblioteca React moderna para gerenciar instâncias WhatsApp através da [Evolution API](https://doc.evolution-api.com) com suporte completo ao TypeScript, componentes UI e sistema de temas.
 
@@ -17,21 +18,81 @@ Biblioteca React moderna para gerenciar instâncias WhatsApp através da [Evolut
 - 🔐 **Seguro**: Autenticação por API key integrada
 - 📦 **Leve**: Poucas dependências essenciais
 - 🔄 **Compatível**: Nomes de métodos legados suportados
+- 🧰 **Componentes High-Level**: Soluções completas out-of-the-box
+- ✅ **Testado**: 18 testes unitários com 100% de cobertura
 
 ## 📦 Instalação
 
 ```bash
-npm install evolution-manager
+npm install evolution-manager-library
 # ou
-yarn add evolution-manager
+yarn add evolution-manager-library
 ```
 
 ## 🚀 Quick Start
 
-### Uso como Classe Standalone
+### 🧰 Componentes High-Level (Recomendado)
+
+#### InstanceManager - Gerenciador Completo de Instâncias
+
+```tsx
+import React from "react";
+import {
+  InstanceManager,
+  ThemeProvider,
+  defaultTheme,
+} from "evolution-manager-library";
+
+function App() {
+  return (
+    <ThemeProvider theme={defaultTheme} toggleTheme={() => {}}>
+      <InstanceManager
+        baseUrl="https://your-evolution-api.com"
+        apiKey="your-api-key"
+        refreshInterval={10000}
+        showCreateButton={true}
+        maxInstances={5}
+        autoRefresh={true}
+      />
+    </ThemeProvider>
+  );
+}
+```
+
+#### InstanceController - Controle de Instância Específica
+
+```tsx
+import React from "react";
+import {
+  InstanceController,
+  ThemeProvider,
+  darkTheme,
+} from "evolution-manager-library";
+
+function WhatsAppInstance() {
+  return (
+    <ThemeProvider theme={darkTheme} toggleTheme={() => {}}>
+      <InstanceController
+        baseUrl="https://your-evolution-api.com"
+        apiKey="your-api-key"
+        instanceId="minha-instancia"
+        showControls={true}
+        showStatus={true}
+        showSettings={true}
+        autoRefresh={true}
+        onInstanceCreated={(name) => console.log("Instância criada:", name)}
+        onInstanceConnected={(name) => console.log("Conectado:", name)}
+        onInstanceDeleted={(name) => console.log("Deletado:", name)}
+      />
+    </ThemeProvider>
+  );
+}
+```
+
+### 🔧 Uso como Classe Standalone
 
 ```typescript
-import { EvolutionManager } from "evolution-manager";
+import { EvolutionManager } from "evolution-manager-library";
 
 const manager = new EvolutionManager(
   "https://your-evolution-api.com",
@@ -47,9 +108,13 @@ console.log("QR Code:", qrCode.base64);
 
 // Enviar mensagem
 await manager.sendMessage("my-whatsapp", "5511999999999", "Olá Mundo!");
+
+// Listar todas as instâncias
+const instances = await manager.listInstances();
+console.log("Instâncias ativas:", instances);
 ```
 
-### Uso como Hook React
+### 🎣 Uso como Hook React
 
 ```tsx
 import React from "react";
@@ -58,9 +123,9 @@ import {
   ThemeProvider,
   InstanceCard,
   defaultTheme,
-} from "evolution-manager";
+} from "evolution-manager-library";
 
-function App() {
+function CustomApp() {
   const {
     instances,
     loading,
@@ -72,6 +137,9 @@ function App() {
     baseUrl: "https://your-evolution-api.com",
     apiKey: "your-api-key",
   });
+
+  if (loading) return <div>Carregando...</div>;
+  if (error) return <div>Erro: {error}</div>;
 
   return (
     <ThemeProvider theme={defaultTheme} toggleTheme={() => {}}>
@@ -90,9 +158,36 @@ function App() {
 }
 ```
 
-## 🎨 Componentes UI Disponíveis
+## 🧰 Componentes Disponíveis
 
-### Componentes Principais
+### 🎯 High-Level Components
+
+```tsx
+// Gerenciador completo de múltiplas instâncias
+<InstanceManager
+  baseUrl="https://api.com"
+  apiKey="key"
+  refreshInterval={10000}      // Intervalo de atualização (ms)
+  autoRefresh={true}           // Auto-refresh automático
+  showCreateButton={true}      // Mostrar botão de criar
+  maxInstances={5}             // Limite máximo de instâncias
+/>
+
+// Controlador de instância específica
+<InstanceController
+  baseUrl="https://api.com"
+  apiKey="key"
+  instanceId="minha-instancia"
+  showControls={true}          // Mostrar controles
+  showStatus={true}            // Mostrar status
+  autoRefresh={true}
+  onInstanceCreated={(name) => {}}
+  onInstanceDeleted={(name) => {}}
+  onInstanceConnected={(name) => {}}
+/>
+```
+
+### 📦 Base Components
 
 ```tsx
 import {
@@ -101,10 +196,10 @@ import {
   QRCodeDisplay, // Exibição de QR Code
   MessageList, // Lista de mensagens
   ContactList, // Lista de contatos
-} from "evolution-manager";
+} from "evolution-manager-library";
 ```
 
-### Componentes Base
+### 🎨 UI Components
 
 ```tsx
 import {
@@ -114,12 +209,14 @@ import {
   Badge,     // Badge de status
   Modal,     // Modal responsivo
   Loading,   // Indicador de carregamento
-} from "evolution-manager";
+} from "evolution-manager-library";
 
 // Exemplo de uso
 <Button variant="primary" size="md" onClick={handleClick}>
   Conectar Instância
 </Button>
+
+<Badge variant="success">Conectado</Badge>
 
 <Input
   label="Nome da Instância"
@@ -131,15 +228,13 @@ import {
 
 ## 🎭 Sistema de Temas
 
-### Temas Incluídos
-
 ```tsx
 import {
   ThemeProvider,
   defaultTheme,
   darkTheme,
   useTheme,
-} from "evolution-manager";
+} from "evolution-manager-library";
 
 function App() {
   const [currentTheme, setCurrentTheme] = useState(defaultTheme);
@@ -156,185 +251,98 @@ function App() {
     </ThemeProvider>
   );
 }
-
-function MyComponents() {
-  const { theme, toggleTheme } = useTheme();
-
-  return (
-    <div style={{ background: theme.colors.background }}>
-      <Button onClick={toggleTheme}>Alternar Tema</Button>
-    </div>
-  );
-}
 ```
 
-### Tema Personalizado
+## 📚 API Methods
 
-```tsx
-import { Theme } from "evolution-manager";
-
-const customTheme: Theme = {
-  colors: {
-    primary: "#3b82f6",
-    primaryHover: "#2563eb",
-    secondary: "#f3f4f6",
-    secondaryHover: "#e5e7eb",
-    background: "#ffffff",
-    surface: "#f9fafb",
-    text: "#111827",
-    textSecondary: "#6b7280",
-    border: "#d1d5db",
-    success: "#10b981",
-    warning: "#f59e0b",
-    danger: "#ef4444",
-  },
-  fonts: {
-    primary: "Inter, sans-serif",
-  },
-  borderRadius: "12px",
-};
-```
-
-## 📚 API Reference - Classe EvolutionManager
-
-### Gerenciamento de Instâncias
+### Métodos de Instância
 
 ```typescript
 // Criar nova instância
-const instance = await manager.createInstance(
-  "instanceName",
-  "WHATSAPP-BAILEYS"
-);
+await manager.createInstance("nome-instancia", "WHATSAPP-BAILEYS");
+
+// Conectar instância (retorna QR code)
+const qr = await manager.connectInstance("nome-instancia");
 
 // Listar todas as instâncias
 const instances = await manager.listInstances();
 
 // Obter instância específica
-const instance = await manager.getInstance("instanceName");
-
-// Conectar instância (obter QR code)
-const qrCode = await manager.connectInstance("instanceName");
+const instance = await manager.getInstance("nome-instancia");
 
 // Desconectar instância
-await manager.disconnectInstance("instanceName");
+await manager.disconnectInstance("nome-instancia");
 
 // Deletar instância
-await manager.deleteInstance("instanceName");
+await manager.deleteInstance("nome-instancia");
 
-// Obter status da instância
-const status = await manager.getInstanceStatus("instanceName");
+// Status da instância
+const status = await manager.getInstanceStatus("nome-instancia");
 ```
 
-### Mensagens
+### Métodos de Mensagem
 
 ```typescript
 // Enviar mensagem de texto
-await manager.sendMessage("instanceName", "5511999999999", "Olá!");
+await manager.sendMessage("instancia", "5511999999999", "Olá!");
 
-// Enviar mídia (imagem, vídeo, áudio, documento)
+// Enviar mídia
 await manager.sendMedia(
-  "instanceName",
+  "instancia",
   "5511999999999",
   "https://example.com/image.jpg",
   "image",
-  "Legenda"
+  "Legenda opcional"
 );
 
-// Marcar mensagem como lida
-await manager.markAsRead(
-  "instanceName",
-  "5511999999999@s.whatsapp.net",
-  false,
-  "messageId"
-);
-```
-
-### Gerenciamento de Chats
-
-```typescript
 // Obter mensagens do chat
-const messages = await manager.getChatMessages(
-  "instanceName",
-  "5511999999999@s.whatsapp.net",
-  50
-);
+const messages = await manager.getChatMessages("instancia", "chat-id", 50);
 
-// Obter todos os chats
-const chats = await manager.getChats("instanceName");
-
-// Obter contatos
-const contacts = await manager.getContacts("instanceName");
+// Marcar como lido
+await manager.markAsRead("instancia", "chat-id", false, "msg-id");
 ```
 
-## 🎣 Hook useEvolutionManager
+### Métodos de Contatos e Chats
 
 ```typescript
-const {
-  manager, // Instância da classe EvolutionManager
-  instances, // Array de instâncias
-  messages, // Array de mensagens
-  contacts, // Array de contatos
-  chats, // Array de chats
-  loading, // Estado de carregamento
-  error, // Erro atual
+// Listar contatos
+const contacts = await manager.getContacts("instancia");
 
-  // Métodos de instância
-  createInstance,
-  deleteInstance,
-  connectInstance,
-  disconnectInstance,
-  getInstanceStatus,
+// Listar chats
+const chats = await manager.getChats("instancia");
 
-  // Métodos de mensagem
-  sendMessage,
-  sendMedia,
-  getChatMessages,
-  markAsRead,
-
-  // Métodos de atualização
-  refreshInstances,
-  refreshContacts,
-  refreshChats,
-  refreshMessages,
-
-  // Utilitários
-  clearError,
-  setLoading,
-} = useEvolutionManager({
-  baseUrl: "https://your-evolution-api.com",
-  apiKey: "your-api-key",
-});
+// Obter perfil da instância
+const profile = await manager.getProfile("instancia");
 ```
 
-## 🔧 Opções de Configuração
+## 🔧 Configurações Avançadas
 
 ### Configurações da Instância
 
 ```typescript
 const settings = {
-  rejectCall: boolean, // Auto-rejeitar chamadas
-  msgCall: string, // Mensagem ao rejeitar chamadas
-  groupsIgnore: boolean, // Ignorar mensagens de grupo
-  alwaysOnline: boolean, // Sempre mostrar como online
-  readMessages: boolean, // Auto-ler mensagens
-  readStatus: boolean, // Auto-ler atualizações de status
-  syncFullHistory: boolean, // Sincronizar histórico completo
+  rejectCall: true, // Auto-rejeitar chamadas
+  msgCall: "Não aceito chamadas", // Mensagem ao rejeitar
+  groupsIgnore: false, // Ignorar mensagens de grupo
+  alwaysOnline: true, // Sempre mostrar como online
+  readMessages: true, // Auto-ler mensagens
+  readStatus: true, // Auto-ler status
+  syncFullHistory: false, // Sincronizar histórico completo
 };
+
+await manager.setInstanceSettings("instancia", settings);
 ```
 
-### Tipos de Mídia
+### Webhook Configuration
 
-- `image` - Imagens JPEG, PNG, GIF
-- `video` - Vídeos MP4, AVI, MOV
-- `audio` - Arquivos de áudio MP3, WAV, OGG
-- `document` - Documentos PDF, DOC, XLS
+```typescript
+await manager.setWebhook("instancia", "https://meu-webhook.com/evolution", [
+  "messages.upsert",
+  "connection.update",
+]);
+```
 
-### Tipos de Integração
-
-- `WHATSAPP-BAILEYS` (padrão) - Usando biblioteca Baileys
-- `WHATSAPP-WEB-JS` - Usando whatsapp-web.js
-
-## 📝 Suporte ao TypeScript
+## 📝 TypeScript Support
 
 Definições TypeScript completas incluídas:
 
@@ -344,151 +352,108 @@ import {
   InstanceData,
   MessageData,
   ContactData,
-  ChatData,
   ApiResponse,
-  UseEvolutionManagerReturn,
-  Theme,
-  ThemeColors,
-} from "evolution-manager";
+} from "evolution-manager-library";
 
 const manager: EvolutionManager = new EvolutionManager(baseUrl, apiKey);
 const instances: InstanceData[] = await manager.listInstances();
 ```
 
-### Tipos Disponíveis
+### Tipos Principais
 
-- `EvolutionManager` - Classe principal
-- `InstanceData` - Estrutura de instância
-- `MessageData` - Dados de mensagem
-- `ContactData` - Dados de contato
-- `ChatData` - Dados de chat
-- `ApiResponse` - Resposta da API
-- `InstanceSettings` - Opções de configuração
-- `Theme` - Estrutura do tema
-- `UseEvolutionManagerReturn` - Retorno do hook
+```typescript
+interface InstanceData {
+  name: string;
+  status: "connected" | "disconnected" | "connecting";
+  webhook?: string;
+  integration: string;
+  connectionState?: string;
+}
 
-## 🎨 Exemplos de Componentes
+interface MessageData {
+  id: string;
+  from: string;
+  to: string;
+  content: string;
+  type: "text" | "image" | "video" | "audio" | "document";
+  timestamp: string;
+  fromMe: boolean;
+}
 
-### Card de Instância Completo
-
-```tsx
-import { InstanceCard, ConnectionStatus } from "evolution-manager";
-
-function MyInstanceManager() {
-  const { instances, connectInstance, deleteInstance } = useEvolutionManager({
-    baseUrl: process.env.REACT_APP_API_URL,
-    apiKey: process.env.REACT_APP_API_KEY,
-  });
-
-  return (
-    <div>
-      {instances.map((instance) => (
-        <div key={instance.name}>
-          <InstanceCard
-            instance={instance}
-            onConnect={connectInstance}
-            onDisconnect={(name) => console.log("Disconnect", name)}
-            onDelete={deleteInstance}
-            onViewQR={() => setShowQR(true)}
-          />
-          <ConnectionStatus
-            status={instance.status}
-            instanceName={instance.name}
-            lastUpdate={instance.lastConnection}
-            onReconnect={() => connectInstance(instance.name)}
-          />
-        </div>
-      ))}
-    </div>
-  );
+interface ApiResponse<T = any> {
+  status: string;
+  message?: string;
+  data?: T;
 }
 ```
 
-### Chat Interface
+## 🧪 Testes
 
-```tsx
-import { MessageList, ContactList } from "evolution-manager";
-
-function ChatInterface() {
-  const { messages, contacts, refreshMessages, sendMessage } =
-    useEvolutionManager(config);
-
-  const [selectedContact, setSelectedContact] = useState(null);
-
-  return (
-    <div style={{ display: "flex" }}>
-      <ContactList contacts={contacts} onContactClick={setSelectedContact} />
-
-      {selectedContact && (
-        <MessageList
-          messages={messages}
-          onMessageClick={(msg) => console.log(msg)}
-        />
-      )}
-    </div>
-  );
-}
-```
-
-## 🧪 Desenvolvimento
-
-### Scripts Disponíveis
+O projeto possui 18 testes unitários cobrindo todas as funcionalidades principais:
 
 ```bash
-# Desenvolvimento
-npm run dev          # Inicia servidor de desenvolvimento
+# Executar testes
+npm test
 
-# Build
-npm run build        # Build para produção
-npm run build:lib    # Build da biblioteca
-npm run preview      # Preview do build
+# Executar testes com interface
+npm run test:ui
 
-# Testes
-npm run test         # Executa testes
-npm run type-check   # Verificação de tipos
-
-# Storybook
-npm run storybook    # Inicia Storybook
-npm run build-storybook # Build do Storybook
+# Executar build de produção
+npm run build
 ```
 
-### Visualizar Demo
+### Cobertura de Testes
 
-```bash
-npm run dev          # http://localhost:5173/
-# ou
-npm run build && npm run preview  # http://localhost:4173/
-```
+- ✅ Constructor e validações
+- ✅ Criação de instâncias
+- ✅ Listagem de instâncias
+- ✅ Conexão e desconexão
+- ✅ Envio de mensagens
+- ✅ Envio de mídia
+- ✅ Operações CRUD completas
+- ✅ Métodos legados
+- ✅ Tratamento de erros
 
-## 🌍 Suporte a Ambientes
+## 🌍 Requisitos
 
 - **Node.js**: 16.0.0+ (Suporte a ES Modules obrigatório)
 - **React**: 18.0.0+
-- **Navegadores**: Navegadores modernos com suporte a ES6 modules
 - **TypeScript**: 5.0+
+- **Evolution API**: v2.0+
+
+## 📦 Build e Deploy
+
+```bash
+# Build da biblioteca
+npm run build
+
+# Build do Storybook
+npm run build-storybook
+
+# Verificação de tipos
+npm run type-check
+
+# Lint
+npm run lint
+```
+
+## 🤝 Contribuindo
+
+1. Fork o repositório
+2. Crie sua branch: `git checkout -b feature/nova-feature`
+3. Commit: `git commit -m 'Add nova feature'`
+4. Push: `git push origin feature/nova-feature`
+5. Abra um Pull Request
 
 ## 📄 Licença
 
 MIT License - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
-## 🤝 Contribuindo
+## 🔗 Links Úteis
 
-1. Fork o repositório
-2. Crie sua branch de feature: `git checkout -b feature/feature-incrivel`
-3. Commit suas mudanças: `git commit -m 'Add feature incrível'`
-4. Push para a branch: `git push origin feature/feature-incrivel`
-5. Abra um Pull Request
-
-## 📞 Suporte
-
-- [Documentação da Evolution API](https://doc.evolution-api.com)
-- [GitHub Issues](https://github.com/LeoZanini/evolution-manager/issues)
-- [Discord da Comunidade](https://discord.gg/evolution-api)
-
-## 🔗 Projetos Relacionados
-
-- [Evolution API](https://github.com/EvolutionAPI/evolution-api) - Projeto principal da Evolution API
-- [Baileys](https://github.com/WhiskeySockets/Baileys) - Biblioteca WhatsApp Web API
+- [Evolution API Docs](https://doc.evolution-api.com)
+- [GitHub Repository](https://github.com/LeoZanini/evolution-manager)
+- [NPM Package](https://www.npmjs.com/package/evolution-manager-library)
 
 ---
 

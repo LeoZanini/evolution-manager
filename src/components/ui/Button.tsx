@@ -1,91 +1,47 @@
 import React from "react";
-import styled from "styled-components";
-import { useTheme } from "../../hooks/useTheme";
+import clsx from "clsx";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "danger" | "ghost";
   size?: "sm" | "md" | "lg";
-  loading?: boolean;
+  children: React.ReactNode;
 }
-
-const StyledButton = styled.button<{
-  $variant: string;
-  $size: string;
-  $theme: any;
-}>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: none;
-  border-radius: ${(props) => props.$theme.borderRadius};
-  font-family: ${(props) => props.$theme.fonts.primary};
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  ${(props) => {
-    const sizes = {
-      sm: "padding: 8px 16px; font-size: 14px; height: 32px;",
-      md: "padding: 12px 20px; font-size: 14px; height: 40px;",
-      lg: "padding: 16px 24px; font-size: 16px; height: 48px;",
-    };
-    return sizes[props.$size as keyof typeof sizes];
-  }}
-
-  ${(props) => {
-    const variants = {
-      primary: `
-        background: ${props.$theme.colors.primary};
-        color: white;
-        &:hover { background: ${props.$theme.colors.primaryHover}; }
-      `,
-      secondary: `
-        background: ${props.$theme.colors.secondary};
-        color: ${props.$theme.colors.text};
-        &:hover { background: ${props.$theme.colors.secondaryHover}; }
-      `,
-      danger: `
-        background: ${props.$theme.colors.danger};
-        color: white;
-        &:hover { opacity: 0.9; }
-      `,
-      ghost: `
-        background: transparent;
-        color: ${props.$theme.colors.primary};
-        border: 1px solid ${props.$theme.colors.border};
-        &:hover { background: ${props.$theme.colors.secondary}; }
-      `,
-    };
-    return variants[props.$variant as keyof typeof variants];
-  }}
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
 
 export const Button: React.FC<ButtonProps> = ({
   variant = "primary",
   size = "md",
-  loading = false,
+  className,
   children,
   disabled,
   ...props
 }) => {
-  const { theme } = useTheme();
+  const baseClasses =
+    "font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+
+  const variants = {
+    primary:
+      "bg-primary-500 hover:bg-primary-600 text-white focus:ring-primary-500",
+    secondary:
+      "bg-gray-200 hover:bg-gray-300 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white focus:ring-gray-500",
+    danger:
+      "bg-danger-500 hover:bg-danger-600 text-white focus:ring-danger-500",
+    ghost:
+      "text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800 focus:ring-gray-500",
+  };
+
+  const sizes = {
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2 text-sm",
+    lg: "px-6 py-3 text-base",
+  };
 
   return (
-    <StyledButton
-      $variant={variant}
-      $size={size}
-      $theme={theme}
-      disabled={disabled || loading}
+    <button
+      className={clsx(baseClasses, variants[variant], sizes[size], className)}
+      disabled={disabled}
       {...props}
     >
-      {loading && <div>⏳</div>}
       {children}
-    </StyledButton>
+    </button>
   );
 };

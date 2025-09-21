@@ -1,141 +1,66 @@
 import React from "react";
-import styled from "styled-components";
-import { useTheme } from "../hooks/useTheme";
 import { Badge } from "./ui/Badge";
-import { Card } from "./ui/Card";
+import { getStatusStyles, getStatusText } from "../utils/statusUtils";
+import clsx from "clsx";
 
 interface ConnectionStatusProps {
-  status: "connected" | "disconnected" | "connecting";
-  instanceName?: string;
+  status: string;
+  instanceName: string;
   lastUpdate?: Date;
   onReconnect?: () => void;
 }
-
-const Container = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const StatusIndicator = styled.div<{ $status: string; $theme: any }>`
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: ${(props) => {
-    switch (props.$status) {
-      case "connected":
-        return props.$theme.colors.success;
-      case "connecting":
-        return props.$theme.colors.warning;
-      default:
-        return props.$theme.colors.danger;
-    }
-  }};
-
-  ${(props) =>
-    props.$status === "connecting" &&
-    `
-    animation: pulse 2s infinite;
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-  `}
-`;
-
-const InfoContainer = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-`;
-
-const InstanceName = styled.span<{ $theme: any }>`
-  font-weight: 600;
-  color: ${(props) => props.$theme.colors.text};
-  font-family: ${(props) => props.$theme.fonts.primary};
-`;
-
-const LastUpdate = styled.span<{ $theme: any }>`
-  font-size: 12px;
-  color: ${(props) => props.$theme.colors.textSecondary};
-  font-family: ${(props) => props.$theme.fonts.primary};
-`;
-
-const ReconnectButton = styled.button<{ $theme: any }>`
-  background: none;
-  border: 1px solid ${(props) => props.$theme.colors.primary};
-  color: ${(props) => props.$theme.colors.primary};
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: ${(props) => props.$theme.colors.primary};
-    color: white;
-  }
-`;
 
 export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   status,
   instanceName,
   lastUpdate,
-  onReconnect,
 }) => {
-  const { theme } = useTheme();
+  const statusStyles = getStatusStyles(status);
+  const statusText = getStatusText(status);
 
-  const getStatusText = () => {
-    switch (status) {
-      case "connected":
-        return "Conectado";
-      case "connecting":
-        return "Conectando...";
-      default:
-        return "Desconectado";
-    }
-  };
-
-  const getStatusVariant = () => {
+  const getBadgeVariant = (status: string) => {
     switch (status) {
       case "connected":
         return "success";
       case "connecting":
         return "warning";
-      default:
+      case "disconnected":
         return "danger";
+      default:
+        return "default";
     }
   };
 
-  const formatLastUpdate = () => {
-    if (!lastUpdate) return null;
-    return `Última atualização: ${lastUpdate.toLocaleTimeString()}`;
-  };
-
   return (
-    <Card variant="outlined" padding="md">
-      <Container>
-        <StatusIndicator $status={status} $theme={theme} />
-        <InfoContainer>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {instanceName && (
-              <InstanceName $theme={theme}>{instanceName}</InstanceName>
-            )}
-            <Badge variant={getStatusVariant()} size="sm">
-              {getStatusText()}
-            </Badge>
-          </div>
-          {lastUpdate && (
-            <LastUpdate $theme={theme}>{formatLastUpdate()}</LastUpdate>
-          )}
-        </InfoContainer>
-        {status === "disconnected" && onReconnect && (
-          <ReconnectButton $theme={theme} onClick={onReconnect}>
-            Reconectar
-          </ReconnectButton>
+    <div
+      className={clsx(
+        "flex items-center justify-between p-3 border rounded-lg",
+        statusStyles.bg,
+        statusStyles.border
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <div className={clsx("w-3 h-3 rounded-full", statusStyles.badge)} />
+
+        <div>
+          <p className={clsx("text-sm font-medium", statusStyles.text)}>
+            {statusText}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {instanceName}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Badge variant={getBadgeVariant(status)}>{statusText}</Badge>
+
+        {lastUpdate && (
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {lastUpdate.toLocaleTimeString()}
+          </span>
         )}
-      </Container>
-    </Card>
+      </div>
+    </div>
   );
 };
