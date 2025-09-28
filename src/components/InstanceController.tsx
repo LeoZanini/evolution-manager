@@ -32,8 +32,6 @@ interface InstanceControllerProps {
   showSettings?: boolean;
   showThemeToggle?: boolean;
   showThemeCustomizer?: boolean;
-  autoRefresh?: boolean;
-  refreshInterval?: number;
   onInstanceCreated?: (instanceName: string) => void;
   onInstanceDeleted?: (instanceName: string) => void;
   onInstanceConnected?: (instanceName: string) => void;
@@ -58,8 +56,6 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   showSettings = true,
   showThemeToggle = false,
   showThemeCustomizer = false,
-  autoRefresh = true,
-  refreshInterval = 10000,
   onInstanceCreated,
   onInstanceDeleted,
   onInstanceConnected,
@@ -106,16 +102,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     (instance) => instance.name === instanceId
   );
 
-  // Auto refresh
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      refreshInstances();
-    }, refreshInterval);
-
-    return () => clearInterval(interval);
-  }, [refreshInstances, autoRefresh, refreshInterval]);
+  // Auto refresh removido: só atualiza se usuário clicar no botão refresh
 
   // Refresh inicial
   useEffect(() => {

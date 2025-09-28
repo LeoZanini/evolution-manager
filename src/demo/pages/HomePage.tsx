@@ -78,8 +78,6 @@ function HomePage() {
           showThemeToggle={true}
           showThemeCustomizer={true}
           showCreateButton={true}
-          autoRefresh={false}
-          refreshInterval={5000}
           maxInstances={10}
           onInstanceCreated={(name) => {
             console.log(`Instância criada: ${name}`);

@@ -78,7 +78,6 @@ function InstanceControllerPage() {
             showSettings={true}
             showThemeToggle={true}
             showThemeCustomizer={true}
-            autoRefresh={false}
             onInstanceCreated={(name) => {
               console.log(`Instância criada: ${name}`);
             }}

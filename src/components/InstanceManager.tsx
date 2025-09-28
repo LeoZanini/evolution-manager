@@ -16,8 +16,6 @@ import type { InstanceData, InstanceSettings } from "../types";
 interface InstanceManagerProps {
   baseUrl: string;
   apiKey: string;
-  refreshInterval?: number;
-  autoRefresh?: boolean;
   showCreateButton?: boolean;
   showThemeToggle?: boolean;
   showThemeCustomizer?: boolean;
@@ -42,8 +40,6 @@ interface QRCodeResponse {
 export function InstanceManager({
   baseUrl,
   apiKey,
-  refreshInterval: _refreshInterval = 10000, // Disponível para uso futuro
-  autoRefresh: _autoRefresh = false, // Disponível para uso futuro
   showCreateButton = true,
   showThemeToggle = false,
   showThemeCustomizer = false,
@@ -83,16 +79,7 @@ export function InstanceManager({
     clearError,
   } = useEvolutionManager({ baseUrl, apiKey });
 
-  // Auto-refresh desabilitado por padrão
-  // useEffect(() => {
-  //   if (!autoRefresh) return;
-
-  //   const interval = setInterval(() => {
-  //     refreshInstances();
-  //   }, refreshInterval);
-
-  //   return () => clearInterval(interval);
-  // }, [refreshInstances, autoRefresh, refreshInterval]);
+  // Auto-refresh removido: só atualiza se usuário clicar no botão refresh
 
   const handleCreateInstance = async (instanceName: string) => {
     try {
