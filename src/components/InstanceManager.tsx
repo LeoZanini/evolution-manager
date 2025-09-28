@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useEvolutionManager } from "../hooks/useEvolutionManager";
 import { useTheme } from "../hooks/useTheme";
 import { InstanceCard } from "./InstanceCard";
@@ -8,6 +8,9 @@ import { SettingsModal } from "./SettingsModal";
 import { Button } from "./ui/Button";
 import { Card } from "./ui/Card";
 import { Loading } from "./ui/Loading";
+import { ThemeSwitch } from "./ui/ThemeSwitch";
+import { ThemeCustomizer } from "./ThemeCustomizer";
+import { Plus, RefreshCw, Palette } from "lucide-react";
 import type { InstanceData, InstanceSettings } from "../types";
 
 interface InstanceManagerProps {
@@ -17,6 +20,7 @@ interface InstanceManagerProps {
   autoRefresh?: boolean;
   showCreateButton?: boolean;
   showThemeToggle?: boolean;
+  showThemeCustomizer?: boolean;
   maxInstances?: number;
   className?: string;
   style?: React.CSSProperties;
@@ -38,10 +42,11 @@ interface QRCodeResponse {
 export function InstanceManager({
   baseUrl,
   apiKey,
-  refreshInterval = 10000,
-  autoRefresh = true,
+  refreshInterval: _refreshInterval = 10000, // Disponível para uso futuro
+  autoRefresh: _autoRefresh = false, // Disponível para uso futuro
   showCreateButton = true,
   showThemeToggle = false,
+  showThemeCustomizer = false,
   maxInstances,
   className,
   style,
@@ -54,6 +59,8 @@ export function InstanceManager({
   const [showQRCode, setShowQRCode] = useState<string | null>(null);
   const [qrCodeData, setQRCodeData] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState<string | null>(null);
+  const [showThemeCustomizerModal, setShowThemeCustomizerModal] =
+    useState(false);
   const [instanceSettings, setInstanceSettings] = useState<InstanceSettings>({
     rejectCall: false,
     msgCall: "Chamadas não são permitidas neste número.",
@@ -76,16 +83,16 @@ export function InstanceManager({
     clearError,
   } = useEvolutionManager({ baseUrl, apiKey });
 
-  // Auto-refresh
-  useEffect(() => {
-    if (!autoRefresh) return;
+  // Auto-refresh desabilitado por padrão
+  // useEffect(() => {
+  //   if (!autoRefresh) return;
 
-    const interval = setInterval(() => {
-      refreshInstances();
-    }, refreshInterval);
+  //   const interval = setInterval(() => {
+  //     refreshInstances();
+  //   }, refreshInterval);
 
-    return () => clearInterval(interval);
-  }, [refreshInstances, autoRefresh, refreshInterval]);
+  //   return () => clearInterval(interval);
+  // }, [refreshInstances, autoRefresh, refreshInterval]);
 
   const handleCreateInstance = async (instanceName: string) => {
     try {
@@ -162,8 +169,8 @@ export function InstanceManager({
 
   return (
     <div
-      className={`min-h-screen bg-gray-50 dark:bg-gray-900 p-4 ${className}`}
-      style={style}
+      className={`min-h-screen p-4 ${className}`}
+      style={{ backgroundColor: "var(--theme-muted)", ...style }}
     >
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -173,22 +180,42 @@ export function InstanceManager({
             {maxInstances && `/${maxInstances}`})
           </h2>
 
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-4 flex-wrap items-center">
             {showThemeToggle && (
-              <Button variant="ghost" size="sm" onClick={toggleTheme}>
-                {theme.name === "light" ? "🌙" : "☀️"}
+              <ThemeSwitch
+                checked={theme.isDark}
+                onCheckedChange={toggleTheme}
+              />
+            )}
+            {showThemeCustomizer && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowThemeCustomizerModal(true)}
+                className="flex items-center gap-2"
+              >
+                <Palette className="w-4 h-4" />
+                Personalizar
               </Button>
             )}
-            <Button variant="secondary" size="sm" onClick={refreshInstances}>
-              🔄 Atualizar
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={refreshInstances}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Atualizar
             </Button>
             {showCreateButton && canCreateMore && (
               <Button
                 variant="primary"
                 size="sm"
                 onClick={() => setShowCreateForm(true)}
+                className="flex items-center gap-2"
               >
-                ➕ Nova Instância
+                <Plus className="w-4 h-4" />
+                Nova Instância
               </Button>
             )}
           </div>
@@ -232,7 +259,6 @@ export function InstanceManager({
               instance={instance}
               onConnect={() => handleConnectInstance(instance.name)}
               onDelete={() => handleDeleteInstance(instance.name)}
-              onViewQR={() => setShowQRCode(instance.name)}
               onSettings={() => setShowSettings(instance.name)}
             />
           ))}
@@ -241,7 +267,9 @@ export function InstanceManager({
         {/* Empty State */}
         {instances.length === 0 && !loading && (
           <Card className="text-center py-12">
-            <div className="text-6xl mb-4">📱</div>
+            <div className="text-gray-400 mb-4">
+              <Plus className="w-16 h-16 mx-auto" />
+            </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               Nenhuma instância encontrada
             </h3>
@@ -285,6 +313,11 @@ export function InstanceManager({
             onClose={() => setShowSettings(null)}
           />
         )}
+
+        <ThemeCustomizer
+          isOpen={showThemeCustomizerModal}
+          onClose={() => setShowThemeCustomizerModal(false)}
+        />
       </div>
     </div>
   );

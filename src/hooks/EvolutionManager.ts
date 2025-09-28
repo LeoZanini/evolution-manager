@@ -7,6 +7,8 @@ export interface InstanceData {
   webhook?: string;
   integration: string;
   connectionState?: string;
+  contactsCount?: number;
+  chatsCount?: number;
 }
 
 export interface MessageData {
@@ -134,14 +136,46 @@ export default class EvolutionManager {
   }
 
   /**
-   * List all instances
+   * List all instances with additional data
    */
-  async listInstances(): Promise<InstanceData[]> {
+  async listInstances(includeStats: boolean = false): Promise<InstanceData[]> {
     try {
       const response: AxiosResponse<InstanceData[]> = await this.client.get(
         "/instance/fetchInstances"
       );
-      return response.data;
+
+      const instances = response.data;
+
+      if (includeStats) {
+        // Buscar contatos e conversas para cada instância conectada
+        const instancesWithStats = await Promise.all(
+          instances.map(async (instance) => {
+            if (instance.status === "connected") {
+              try {
+                const [contactsCount, chatsCount] = await Promise.all([
+                  this.getContactsCount(instance.name),
+                  this.getChatsCount(instance.name),
+                ]);
+                return {
+                  ...instance,
+                  contactsCount,
+                  chatsCount,
+                };
+              } catch (error) {
+                console.warn(
+                  `Failed to get stats for ${instance.name}:`,
+                  error
+                );
+                return instance;
+              }
+            }
+            return instance;
+          })
+        );
+        return instancesWithStats;
+      }
+
+      return instances;
     } catch (error: any) {
       throw new Error(`Failed to list instances: ${error.message}`);
     }
@@ -158,6 +192,40 @@ export default class EvolutionManager {
       return response.data;
     } catch (error: any) {
       throw new Error(`Failed to connect instance: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get contacts count for an instance
+   */
+  async getContactsCount(instanceName: string): Promise<number> {
+    try {
+      const response = await this.client.get(
+        `/chat/findContacts/${instanceName}`
+      );
+      return Array.isArray(response.data) ? response.data.length : 0;
+    } catch (error: any) {
+      console.warn(
+        `Failed to get contacts count for ${instanceName}:`,
+        error.message
+      );
+      return 0;
+    }
+  }
+
+  /**
+   * Get chats count for an instance
+   */
+  async getChatsCount(instanceName: string): Promise<number> {
+    try {
+      const response = await this.client.get(`/chat/findChats/${instanceName}`);
+      return Array.isArray(response.data) ? response.data.length : 0;
+    } catch (error: any) {
+      console.warn(
+        `Failed to get chats count for ${instanceName}:`,
+        error.message
+      );
+      return 0;
     }
   }
 

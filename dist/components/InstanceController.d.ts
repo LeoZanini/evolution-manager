@@ -7,6 +7,8 @@ interface InstanceControllerProps {
     showControls?: boolean;
     showStatus?: boolean;
     showSettings?: boolean;
+    showThemeToggle?: boolean;
+    showThemeCustomizer?: boolean;
     autoRefresh?: boolean;
     refreshInterval?: number;
     onInstanceCreated?: (instanceName: string) => void;

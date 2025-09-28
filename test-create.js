@@ -1,8 +1,14 @@
 import axios from "axios";
 
+// Carregar variáveis de ambiente
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
 // Suas credenciais
-const BASE_URL = "https://evolution.kodama.solutions";
-const API_KEY = "c770209f03d6c959088734dd153c9b16";
+const BASE_URL =
+  process.env.VITE_EVOLUTION_BASE_URL || "https://evolution.kodama.solutions";
+const API_KEY =
+  process.env.VITE_EVOLUTION_API_KEY || "c770209f03d6c959088734dd153c9b16";
 
 async function testCreateInstance() {
   try {

@@ -4,6 +4,7 @@
 
 /* Custom CSS variables for themes */
 :root {
+  /* Default theme colors */
   --color-primary-50: #eff6ff;
   --color-primary-100: #dbeafe;
   --color-primary-500: #3b82f6;
@@ -13,11 +14,42 @@
   --color-success-500: #10b981;
   --color-warning-500: #f59e0b;
   --color-danger-500: #ef4444;
+
+  /* Custom theme properties - can be overridden by JS */
+  --theme-background: #ffffff;
+  --theme-foreground: #1f2937;
+  --theme-primary: #3b82f6;
+  --theme-secondary: #6b7280;
+  --theme-accent: #8b5cf6;
+  --theme-success: #10b981;
+  --theme-warning: #f59e0b;
+  --theme-danger: #ef4444;
+  --theme-border: #e5e7eb;
+  --theme-muted: #f3f4f6;
+}
+
+/* Dark mode theme properties */
+.dark {
+  --theme-background: #1f2937;
+  --theme-foreground: #f9fafb;
+  --theme-primary: #60a5fa;
+  --theme-secondary: #9ca3af;
+  --theme-accent: #a78bfa;
+  --theme-success: #34d399;
+  --theme-warning: #fbbf24;
+  --theme-danger: #f87171;
+  --theme-border: #374151;
+  --theme-muted: #111827;
 }
 
 /* Customizações específicas para temas */
+body {
+  background-color: var(--theme-background);
+  color: var(--theme-foreground);
+}
+
 .dark {
-  @apply bg-gray-900 text-white;
+  @apply text-white;
 }
 
 /* Componentes customizados */

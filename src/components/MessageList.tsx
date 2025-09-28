@@ -4,6 +4,7 @@ import { Input } from "./ui/Input";
 import { Badge } from "./ui/Badge";
 import { Loading } from "./ui/Loading";
 import { Button } from "./ui/Button";
+import { MessageCircle } from "lucide-react";
 
 interface Message {
   id: string;
@@ -256,7 +257,9 @@ export const MessageList: React.FC<MessageListProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-4xl mb-2">📱</div>
+            <div className="text-gray-400 mb-2">
+              <MessageCircle className="w-12 h-12 mx-auto" />
+            </div>
             <p className="text-gray-500 dark:text-gray-400 text-sm">
               Nenhuma mensagem ainda
             </p>

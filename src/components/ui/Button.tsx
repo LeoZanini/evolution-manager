@@ -16,17 +16,13 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseClasses =
-    "font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
-    primary:
-      "bg-primary-500 hover:bg-primary-600 text-white focus:ring-primary-500",
-    secondary:
-      "bg-gray-200 hover:bg-gray-300 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white focus:ring-gray-500",
-    danger:
-      "bg-danger-500 hover:bg-danger-600 text-white focus:ring-danger-500",
-    ghost:
-      "text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800 focus:ring-gray-500",
+    primary: "text-white focus:ring-2 focus:ring-offset-2",
+    secondary: "focus:ring-2 focus:ring-offset-2",
+    danger: "text-white focus:ring-2 focus:ring-offset-2",
+    ghost: "focus:ring-2 focus:ring-offset-2",
   };
 
   const sizes = {
@@ -35,9 +31,41 @@ export const Button: React.FC<ButtonProps> = ({
     lg: "px-6 py-3 text-base",
   };
 
+  const getVariantStyles = () => {
+    switch (variant) {
+      case "primary":
+        return {
+          backgroundColor: "var(--theme-primary)",
+          borderColor: "var(--theme-primary)",
+          color: "white",
+        };
+      case "secondary":
+        return {
+          backgroundColor: "var(--theme-muted)",
+          borderColor: "var(--theme-border)",
+          color: "var(--theme-foreground)",
+        };
+      case "danger":
+        return {
+          backgroundColor: "var(--theme-danger)",
+          borderColor: "var(--theme-danger)",
+          color: "white",
+        };
+      case "ghost":
+        return {
+          backgroundColor: "transparent",
+          borderColor: "transparent",
+          color: "var(--theme-secondary)",
+        };
+      default:
+        return {};
+    }
+  };
+
   return (
     <button
       className={clsx(baseClasses, variants[variant], sizes[size], className)}
+      style={getVariantStyles()}
       disabled={disabled}
       {...props}
     >

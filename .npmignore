@@ -1,0 +1,29 @@
+# Development files
+src/demo/
+src/test/
+src/stories/
+dist-demo/
+test-*.js
+*.test.ts
+*.test.tsx
+
+# Development config
+vite.config.ts
+vitest.config.ts
+tailwind.config.js
+postcss.config.js
+.storybook/
+.env.local
+
+# Build artifacts that shouldn't be published
+node_modules/
+.DS_Store
+.vscode/
+.git/
+*.log
+
+# Documentation for development
+README.md
+THEME_CUSTOMIZER.md
+
+# Only include what's in package.json "files" field

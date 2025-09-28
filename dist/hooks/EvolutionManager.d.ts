@@ -4,6 +4,8 @@ export interface InstanceData {
     webhook?: string;
     integration: string;
     connectionState?: string;
+    contactsCount?: number;
+    chatsCount?: number;
 }
 export interface MessageData {
     id: string;
@@ -73,13 +75,21 @@ export default class EvolutionManager {
      */
     createInstance(instanceName: string, integration?: string): Promise<ApiResponse>;
     /**
-     * List all instances
+     * List all instances with additional data
      */
-    listInstances(): Promise<InstanceData[]>;
+    listInstances(includeStats?: boolean): Promise<InstanceData[]>;
     /**
      * Connect an instance and get QR code
      */
     connectInstance(instanceName: string): Promise<ApiResponse>;
+    /**
+     * Get contacts count for an instance
+     */
+    getContactsCount(instanceName: string): Promise<number>;
+    /**
+     * Get chats count for an instance
+     */
+    getChatsCount(instanceName: string): Promise<number>;
     /**
      * Disconnect/logout an instance
      */

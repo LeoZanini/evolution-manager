@@ -1,14 +1,16 @@
 {
   "name": "evolution-manager-library",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Modern React component library for Evolution API with theming support",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README-NPM.md"
   ],
+  "readme": "README-NPM.md",
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -19,8 +21,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview",
     "build:lib": "vite build --mode lib",
+    "build:demo": "vite build",
+    "preview": "vite preview",
+    "prepublishOnly": "npm run build:lib",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest",
@@ -40,12 +44,12 @@
   "author": "Leo Zanini",
   "license": "MIT",
   "dependencies": {
-    "@tailwindcss/postcss": "^4.1.13",
     "axios": "^1.12.2",
     "clsx": "^2.1.1",
     "lucide-react": "^0.303.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^7.9.3",
     "styled-components": "^6.0.0"
   },
   "devDependencies": {
@@ -66,6 +70,7 @@
     "@vitejs/plugin-react": "^4.2.1",
     "@vitest/ui": "^1.0.4",
     "autoprefixer": "^10.4.21",
+    "dotenv": "^17.2.2",
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
@@ -73,7 +78,7 @@
     "jsdom": "^27.0.0",
     "postcss": "^8.5.6",
     "storybook": "^7.6.7",
-    "tailwindcss": "^4.1.13",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.2.2",
     "vite": "^5.0.8",
     "vite-plugin-dts": "^3.6.4",

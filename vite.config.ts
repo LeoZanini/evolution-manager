@@ -8,7 +8,23 @@ export default defineConfig(({ mode }) => {
   const isLibMode = mode === "lib";
 
   return {
-    plugins: [react(), ...(isLibMode ? [dts({ include: ["src"] })] : [])],
+    plugins: [
+      react(),
+      ...(isLibMode
+        ? [
+            dts({
+              include: ["src"],
+              exclude: [
+                "src/demo/**",
+                "src/test/**",
+                "src/test-integration.ts",
+                "**/*.test.*",
+                "**/*.spec.*",
+              ],
+            }),
+          ]
+        : []),
+    ],
     ...(isLibMode
       ? {
           build: {
