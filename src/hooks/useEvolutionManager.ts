@@ -264,9 +264,54 @@ export const useEvolutionManager = (
     setError(null);
   }, []);
 
-  // ##################################
-  // Instance Methods with State
-  // ##################################
+  // Data fetching methods
+  const refreshInstances = useCallback(async (): Promise<void> => {
+    if (!manager) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const instancesData = await manager.listInstances();
+      setInstances(instancesData);
+      // Update states based on fetched data
+      instancesData.forEach((instance: InstanceData) => {
+        const currentState = getInstanceState(instance.name);
+        const apiState = instance.status;
+        let targetState: InstanceState;
+
+        if (apiState === "connected") {
+          targetState = InstanceState.CONNECTED;
+        } else if (apiState === "disconnected") {
+          targetState =
+            currentState === InstanceState.CREATING ||
+            currentState === InstanceState.CREATED
+              ? InstanceState.CREATED
+              : InstanceState.DISCONNECTED;
+        } else if (apiState === "connecting") {
+          targetState = InstanceState.CONNECTING;
+        } else {
+          targetState = InstanceState.UNKNOWN;
+        }
+
+        // Only update if the state is different and not in a transient state
+        if (
+          currentState !== targetState &&
+          ![
+            InstanceState.CONNECTING,
+            InstanceState.DISCONNECTING,
+            InstanceState.DELETING,
+            InstanceState.GENERATING_QR,
+          ].includes(currentState)
+        ) {
+          setInstanceState(instance.name, targetState);
+        }
+      });
+    } catch (err: any) {
+      handleError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [manager, handleError, getInstanceState, setInstanceState]);
 
   const createInstanceWithState = useCallback(
     async (name: string, integration?: string) => {
@@ -281,7 +326,7 @@ export const useEvolutionManager = (
         handleError(err);
       }
     },
-    [manager, setInstanceState, handleError]
+    [manager, setInstanceState, handleError, refreshInstances]
   );
 
   const connectInstanceWithState = useCallback(
@@ -319,7 +364,7 @@ export const useEvolutionManager = (
         handleError(err);
       }
     },
-    [manager, setInstanceState, handleError]
+    [manager, setInstanceState, handleError, stopPolling, refreshInstances]
   );
 
   const deleteInstanceWithState = useCallback(
@@ -339,7 +384,7 @@ export const useEvolutionManager = (
         handleError(err);
       }
     },
-    [manager, setInstanceState, handleError]
+    [manager, setInstanceState, handleError, stopPolling, refreshInstances]
   );
 
   // Instance methods
@@ -567,49 +612,6 @@ export const useEvolutionManager = (
   );
 
   // Data fetching methods
-  const refreshInstances = useCallback(async (): Promise<void> => {
-    if (!manager) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const instancesData = await manager.listInstances();
-      setInstances(instancesData);
-      // Update states based on fetched data
-      instancesData.forEach((instance: InstanceData) => {
-        const currentState = getInstanceState(instance.name);
-        const apiState = instance.status;
-        let targetState: InstanceState;
-
-        if (apiState === "connected") {
-          targetState = InstanceState.CONNECTED;
-        } else if (apiState === "disconnected") {
-          targetState = InstanceState.DISCONNECTED; // Or DISCONNECTED if it was previously connected
-        } else if (apiState === "connecting") {
-          targetState = InstanceState.CONNECTING;
-        } else {
-          targetState = InstanceState.UNKNOWN;
-        }
-
-        // Only update if the state is different and not in a transient state
-        if (
-          currentState !== targetState &&
-          ![
-            InstanceState.CONNECTING,
-            InstanceState.DISCONNECTING,
-            InstanceState.DELETING,
-            InstanceState.GENERATING_QR,
-          ].includes(currentState)
-        ) {
-          setInstanceState(instance.name, targetState);
-        }
-      });
-    } catch (err: any) {
-      handleError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [manager, handleError, getInstanceState, setInstanceState]);
 
   const refreshContacts = useCallback(
     async (instanceName: string): Promise<void> => {
