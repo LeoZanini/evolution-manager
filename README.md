@@ -3,7 +3,7 @@
 [![npm version](https://badge.fury.io/js/evolution-manager-library.svg)](https://badge.fury.io/js/evolution-manager-library)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2+-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/Tests-16%20passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-16%20passed-brightgreen.svg)](https://github.com/LeoZanini/evolution-manager/tree/master/tests)
 
 Biblioteca React moderna para gerenciar instâncias WhatsApp através da [Evolution API](https://doc.evolution-api.com) com suporte completo ao TypeScript, componentes UI e sistema de temas.
 
@@ -33,25 +33,32 @@ yarn add evolution-manager-library
 Esta biblioteca oferece **três formas de uso**, cada uma adequada para diferentes cenários:
 
 ### 1. 🧰 **Componentes High-Level** (Mais Fácil)
+
 Componentes React completos e prontos para uso. **Recomendado para começar rápido**.
+
 - `<InstanceManager />` - Gerencia múltiplas instâncias
 - `<InstanceController />` - Controla uma instância específica
 
 ### 2. 🎣 **Hook `useEvolutionManager`** (React com Controle)
+
 Hook React que oferece gerenciamento de estado integrado. **Ideal para integrar em apps React customizados**.
+
 - ✅ Estado React automático (loading, error, instances)
 - ✅ Auto-refresh e polling
 - ✅ Callbacks otimizados com useCallback
 - ✅ Cache de dados
 
 ### 3. 🔧 **Classe `EvolutionManager`** (Máximo Controle)
+
 Classe standalone sem dependências do React. **Ideal para projetos vanilla JS/TS ou controle total**.
+
 - ✅ Sem dependências do React
 - ✅ Funciona em qualquer ambiente JavaScript
 - ✅ API limpa e direta
 - ✅ Controle completo sobre chamadas
 
 > **Por que existem duas opções (Hook e Classe)?**
+>
 > - A **classe** é o core da biblioteca - funciona em qualquer lugar (Node.js, vanilla JS, etc)
 > - O **hook** adiciona conveniências do React (estado automático, loading, error handling)
 > - Ambos são necessários: a classe para flexibilidade, o hook para produtividade em React
@@ -486,6 +493,7 @@ MIT License - veja o arquivo [LICENSE](LICENSE) para detalhes.
 ### EvolutionManager Class Methods
 
 #### Instance Management
+
 ```typescript
 // Criar instância
 createInstance(instanceName: string, integration?: string): Promise<ApiResponse>
@@ -513,15 +521,16 @@ getInstanceStatus(instanceName: string): Promise<ApiResponse>
 ```
 
 #### Messaging
+
 ```typescript
 // Enviar mensagem de texto
 sendMessage(instanceName: string, number: string, message: string): Promise<ApiResponse>
 
 // Enviar mídia (image, video, audio, document)
 sendMedia(
-  instanceName: string, 
-  number: string, 
-  mediaUrl: string, 
+  instanceName: string,
+  number: string,
+  mediaUrl: string,
   mediaType?: "image" | "video" | "audio" | "document",
   caption?: string
 ): Promise<ApiResponse>
@@ -531,6 +540,7 @@ markAsRead(instanceName: string, remoteJid: string, fromMe: boolean, id: string)
 ```
 
 #### Chat & Contact Management
+
 ```typescript
 // Obter mensagens de um chat
 getChatMessages(instanceName: string, remoteJid: string, limit?: number): Promise<MessageData[]>
@@ -546,6 +556,7 @@ getProfile(instanceName: string): Promise<ApiResponse>
 ```
 
 #### Settings & Configuration
+
 ```typescript
 // Definir configurações da instância
 setInstanceSettings(instanceName: string, settings: InstanceSettings): Promise<ApiResponse>
@@ -558,6 +569,7 @@ setWebhook(instanceName: string, webhookUrl: string, events?: string[]): Promise
 ```
 
 #### Utilities
+
 ```typescript
 // Status da API Evolution
 getApiStatus(): Promise<ApiResponse>
@@ -580,7 +592,7 @@ O hook retorna todas as funcionalidades acima mais:
   chats: ChatData[],
   loading: boolean,
   error: string | null,
-  
+
   // Métodos de instância (todos com loading/error handling)
   createInstance: (name: string, integration?: string) => Promise<ApiResponse>,
   deleteInstance: (name: string) => Promise<ApiResponse>,
@@ -588,19 +600,19 @@ O hook retorna todas as funcionalidades acima mais:
   disconnectInstance: (name: string) => Promise<ApiResponse>,
   getInstanceStatus: (name: string) => Promise<ApiResponse>,
   fetchSingleInstance: (name: string) => Promise<InstanceData | null>,
-  
+
   // Métodos de mensagem
   sendMessage: (instanceName: string, number: string, message: string) => Promise<ApiResponse>,
   sendMedia: (...) => Promise<ApiResponse>,
   getChatMessages: (...) => Promise<MessageData[]>,
   markAsRead: (...) => Promise<ApiResponse>,
-  
+
   // Data refresh methods
   refreshInstances: () => Promise<void>,
   refreshContacts: (instanceName: string) => Promise<void>,
   refreshChats: (instanceName: string) => Promise<void>,
   refreshMessages: (instanceName: string, remoteJid: string, limit?: number) => Promise<void>,
-  
+
   // Utilities
   clearError: () => void,
   setLoading: (loading: boolean) => void
