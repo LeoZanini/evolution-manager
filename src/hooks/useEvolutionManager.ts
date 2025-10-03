@@ -584,7 +584,7 @@ export const useEvolutionManager = (
         if (apiState === "connected") {
           targetState = InstanceState.CONNECTED;
         } else if (apiState === "disconnected") {
-          targetState = InstanceState.CREATED; // Or DISCONNECTED if it was previously connected
+          targetState = InstanceState.DISCONNECTED; // Or DISCONNECTED if it was previously connected
         } else if (apiState === "connecting") {
           targetState = InstanceState.CONNECTING;
         } else {

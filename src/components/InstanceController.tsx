@@ -48,6 +48,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     createInstance,
     deleteInstanceWithState,
     disconnectInstanceWithState,
+    refreshInstances,
   } = useEvolutionManager({ baseUrl, apiKey });
 
   const [instanceState, setInstanceState] = useState<InstanceState>(
@@ -61,12 +62,17 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     useState(false);
 
   useEffect(() => {
+    // Hydrate the initial state, but don't trigger any actions yet.
     const initialState = getInstanceState(instanceName);
-    setInstanceState(initialState);
+    if (initialState !== InstanceState.UNKNOWN) {
+      setInstanceState(initialState);
+    }
 
     const unsubscribe = subscribe(
       instanceName,
       ({ state, data }: { state: InstanceState; data?: any }) => {
+        if (state === InstanceState.UNKNOWN) return; // Ignore unknown state updates
+
         setInstanceState(state);
         if (state === InstanceState.QR_GENERATED && data?.qrCode) {
           setQrCode(data.qrCode);
@@ -77,14 +83,13 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
       }
     );
 
-    if (initialState === InstanceState.UNKNOWN) {
-      connectInstanceWithState(instanceName).catch(console.error);
-    }
+    // Initial load to get the real status from the API
+    refreshInstances().catch(console.error);
 
     return () => {
       unsubscribe();
     };
-  }, [instanceName, subscribe, getInstanceState, connectInstanceWithState]);
+  }, [instanceName, subscribe, getInstanceState, refreshInstances]);
 
   const handleConnect = () => {
     connectInstanceWithState(instanceName).catch(console.error);
