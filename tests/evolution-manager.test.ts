@@ -249,28 +249,6 @@ describe("EvolutionManager", () => {
     });
   });
 
-  describe("Legacy methods", () => {
-    it("should call getInstance when using get method", async () => {
-      const spy = vi
-        .spyOn(evolutionManager, "getInstance")
-        .mockResolvedValue({ name: "test" });
-
-      await evolutionManager.get("test");
-
-      expect(spy).toHaveBeenCalledWith("test");
-    });
-
-    it("should call createInstance when using create method", async () => {
-      const spy = vi
-        .spyOn(evolutionManager, "createInstance")
-        .mockResolvedValue({ status: "success" });
-
-      await evolutionManager.create("test", "WHATSAPP-BAILEYS");
-
-      expect(spy).toHaveBeenCalledWith("test", "WHATSAPP-BAILEYS");
-    });
-  });
-
   describe("Error handling", () => {
     it("should handle API errors properly", async () => {
       const error = new Error("Network error");

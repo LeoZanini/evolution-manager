@@ -140,10 +140,6 @@ async function testEvolutionManager() {
     console.log(
       'await manager.sendMessage("instancia", "5511999999999", "Olá!");'
     );
-    console.log("");
-    console.log("// Métodos legacy (compatibilidade)");
-    console.log("const instances2 = await manager.list();");
-    console.log('const instance = await manager.get("nome-da-instancia");');
     console.log("```");
   } catch (error) {
     console.error("❌ Erro durante o teste:", error.message);

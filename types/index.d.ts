@@ -254,18 +254,6 @@ export declare class EvolutionManager {
   // Utilities
   getApiStatus(): Promise<EvolutionApiStatus>;
   getProfile(instanceName: string): Promise<any>;
-
-  // Legacy Methods (backward compatibility)
-  get(instanceName: string): Promise<WhatsAppInstance>;
-  create(
-    instanceName: string,
-    integration?: IntegrationType
-  ): Promise<CreateInstanceResponse>;
-  list(): Promise<WhatsAppInstance[]>;
-  connect(instanceName: string): Promise<ConnectionResponse>;
-  disconnect(instanceName: string): Promise<any>;
-  getQRCode(instanceName: string): Promise<ConnectionResponse>;
-  getStatus(): Promise<EvolutionApiStatus>;
 }
 
 export default EvolutionManager;
