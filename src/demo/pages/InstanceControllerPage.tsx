@@ -66,47 +66,49 @@ function InstanceControllerPage() {
         </div>
       </header>
 
-      <main className="p-6">
-        {instanceId ? (
-          <InstanceController
-            className="w-1/2"
-            baseUrl={baseUrl}
-            apiKey={apiKey}
-            instanceId={instanceId}
-            showControls={true}
-            showStatus={true}
-            showSettings={true}
-            showThemeToggle={true}
-            showThemeCustomizer={true}
-            onInstanceCreated={(name) => {
-              console.log(`Instância criada: ${name}`);
-            }}
-          />
-        ) : (
-          <div
-            className="text-center py-12"
-            style={{
-              backgroundColor: "var(--theme-background)",
-              borderColor: "var(--theme-border)",
-            }}
-          >
-            <h2
-              className="text-xl font-semibold mb-2"
-              style={{ color: "var(--theme-foreground)" }}
+      <main className="p-3 sm:p-6">
+        <div className="max-w-2xl mx-auto">
+          {instanceId ? (
+            <InstanceController
+              className="w-full"
+              baseUrl={baseUrl}
+              apiKey={apiKey}
+              instanceName={instanceId}
+              showControls={true}
+              showStatus={true}
+              showSettings={true}
+              showThemeToggle={true}
+              showThemeCustomizer={true}
+              onInstanceCreated={(name) => {
+                console.log(`Instância criada: ${name}`);
+              }}
+            />
+          ) : (
+            <div
+              className="text-center py-12"
+              style={{
+                backgroundColor: "var(--theme-background)",
+                borderColor: "var(--theme-border)",
+              }}
             >
-              Instância não especificada
-            </h2>
-            <p className="mb-4" style={{ color: "var(--theme-secondary)" }}>
-              Por favor, especifique uma instância válida na URL.
-            </p>
-            <Link to="/">
-              <Button variant="primary">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar ao Manager
-              </Button>
-            </Link>
-          </div>
-        )}
+              <h2
+                className="text-xl font-semibold mb-2"
+                style={{ color: "var(--theme-foreground)" }}
+              >
+                Instância não especificada
+              </h2>
+              <p className="mb-4" style={{ color: "var(--theme-secondary)" }}>
+                Por favor, especifique uma instância válida na URL.
+              </p>
+              <Link to="/">
+                <Button variant="primary">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar ao Manager
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

@@ -26,6 +26,7 @@ export interface UseEvolutionManagerReturn {
   connectInstance: (name: string) => Promise<ApiResponse>;
   disconnectInstance: (name: string) => Promise<ApiResponse>;
   getInstanceStatus: (name: string) => Promise<ApiResponse>;
+  fetchSingleInstance: (name: string) => Promise<InstanceData | null>;
   // Message methods
   sendMessage: (
     instanceName: string,
@@ -159,7 +160,7 @@ export const useEvolutionManager = (
         setLoading(false);
       }
     },
-    [manager]
+    [manager, handleError]
   );
 
   const disconnectInstance = useCallback(
@@ -196,6 +197,22 @@ export const useEvolutionManager = (
       }
     },
     [manager]
+  );
+
+  const fetchSingleInstance = useCallback(
+    async (name: string): Promise<InstanceData | null> => {
+      if (!manager) throw new Error("Manager not initialized");
+
+      try {
+        setError(null);
+        const result = await manager.fetchSingleInstance(name);
+        return result;
+      } catch (err: any) {
+        handleError(err);
+        throw err;
+      }
+    },
+    [manager, handleError]
   );
 
   // Message methods
@@ -310,14 +327,14 @@ export const useEvolutionManager = (
     try {
       setLoading(true);
       setError(null);
-      const instancesData = await manager.listInstances();
+      const instancesData = await manager.listInstances(true); // Sempre buscar com stats
       setInstances(instancesData);
     } catch (err: any) {
       handleError(err);
     } finally {
       setLoading(false);
     }
-  }, [manager]);
+  }, [manager, handleError]);
 
   const refreshContacts = useCallback(
     async (instanceName: string): Promise<void> => {
@@ -402,6 +419,7 @@ export const useEvolutionManager = (
     connectInstance,
     disconnectInstance,
     getInstanceStatus,
+    fetchSingleInstance,
     // Message methods
     sendMessage,
     sendMedia,

@@ -9,6 +9,17 @@ export interface InstanceData {
   connectionState?: string;
   contactsCount?: number;
   chatsCount?: number;
+  messagesCount?: number;
+  ownerJid?: string;
+  profileName?: string;
+  profilePicUrl?: string;
+  deviceInfo?: {
+    platform?: string;
+    deviceManufacturer?: string;
+    deviceModel?: string;
+    osVersion?: string;
+    waVersion?: string;
+  };
 }
 
 export interface MessageData {
@@ -108,6 +119,7 @@ export default class EvolutionManager {
       if (!instance) {
         throw new Error(`Instance '${instanceName}' not found`);
       }
+
       return instance;
     } catch (error: any) {
       throw new Error(`Failed to get instance: ${error.message}`);
@@ -152,14 +164,28 @@ export default class EvolutionManager {
           instances.map(async (instance) => {
             if (instance.status === "connected") {
               try {
-                const [contactsCount, chatsCount] = await Promise.all([
-                  this.getContactsCount(instance.name),
-                  this.getChatsCount(instance.name),
-                ]);
+                const [contactsCount, chatsCount, profileInfo] =
+                  await Promise.all([
+                    this.getContactsCount(instance.name),
+                    this.getChatsCount(instance.name),
+                    this.getInstanceProfile(instance.name),
+                  ]);
+
+                // Extrair informações do perfil/dispositivo
+                const deviceData: any = {};
+                if (profileInfo.data) {
+                  deviceData.ownerJid =
+                    profileInfo.data.wuid || profileInfo.data.id;
+                  deviceData.profileName =
+                    profileInfo.data.name || profileInfo.data.pushName;
+                  deviceData.profilePicUrl = profileInfo.data.profilePicUrl;
+                }
+
                 return {
                   ...instance,
                   contactsCount,
                   chatsCount,
+                  ...deviceData,
                 };
               } catch (error) {
                 console.warn(
@@ -178,6 +204,70 @@ export default class EvolutionManager {
       return instances;
     } catch (error: any) {
       throw new Error(`Failed to list instances: ${error.message}`);
+    }
+  }
+
+  /**
+   * Fetch a single instance by name with full details
+   */
+  async fetchSingleInstance(
+    instanceName: string
+  ): Promise<InstanceData | null> {
+    try {
+      const response: AxiosResponse<any> = await this.client.get(
+        `/instance/fetchInstances?instanceName=${instanceName}`
+      );
+
+      // A API retorna um array, mas com o filtro por nome, só vem 1
+      const instances = Array.isArray(response.data)
+        ? response.data
+        : [response.data];
+
+      if (instances.length === 0) {
+        return null;
+      }
+
+      const instance = instances[0];
+
+      // Se a instância estiver conectada, buscar informações adicionais
+      if (
+        instance.status === "connected" ||
+        instance.connectionState === "open"
+      ) {
+        try {
+          const [contactsCount, chatsCount, profileInfo, messagesCount] =
+            await Promise.all([
+              this.getContactsCount(instanceName),
+              this.getChatsCount(instanceName),
+              this.getInstanceProfile(instanceName),
+              this.getMessagesCount(instanceName),
+            ]);
+
+          // Extrair informações do perfil/dispositivo
+          const deviceData: any = {};
+          if (profileInfo.data) {
+            deviceData.ownerJid = profileInfo.data.wuid || profileInfo.data.id;
+            deviceData.profileName =
+              profileInfo.data.name || profileInfo.data.pushName;
+            deviceData.profilePicUrl = profileInfo.data.profilePicUrl;
+          }
+
+          return {
+            ...instance,
+            contactsCount,
+            chatsCount,
+            messagesCount,
+            ...deviceData,
+          };
+        } catch (error) {
+          console.warn(`Failed to get full stats for ${instanceName}:`, error);
+          return instance;
+        }
+      }
+
+      return instance;
+    } catch (error: any) {
+      throw new Error(`Failed to fetch instance: ${error.message}`);
     }
   }
 
@@ -230,6 +320,28 @@ export default class EvolutionManager {
   }
 
   /**
+   * Get messages count for an instance (all chats)
+   */
+  async getMessagesCount(instanceName: string): Promise<number> {
+    try {
+      const response = await this.client.get(`/chat/findChats/${instanceName}`);
+      if (Array.isArray(response.data)) {
+        // Soma o total de mensagens de todos os chats
+        return response.data.reduce((total: number, chat: any) => {
+          return total + (chat.messagesCount || 0);
+        }, 0);
+      }
+      return 0;
+    } catch (error: any) {
+      console.warn(
+        `Failed to get messages count for ${instanceName}:`,
+        error.message
+      );
+      return 0;
+    }
+  }
+
+  /**
    * Disconnect/logout an instance
    */
   async disconnectInstance(instanceName: string): Promise<ApiResponse> {
@@ -258,7 +370,7 @@ export default class EvolutionManager {
   }
 
   /**
-   * Get instance connection status
+   * Get instance connection status with device info
    */
   async getInstanceStatus(instanceName: string): Promise<ApiResponse> {
     try {
@@ -268,6 +380,24 @@ export default class EvolutionManager {
       return response.data;
     } catch (error: any) {
       throw new Error(`Failed to get instance status: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get instance profile information (device info)
+   */
+  async getInstanceProfile(instanceName: string): Promise<ApiResponse> {
+    try {
+      const response: AxiosResponse<ApiResponse> = await this.client.get(
+        `/chat/whatsappProfile/${instanceName}`
+      );
+      return response.data;
+    } catch (error: any) {
+      console.warn(
+        `Failed to get instance profile for ${instanceName}:`,
+        error.message
+      );
+      return { status: "error", message: error.message };
     }
   }
 

@@ -42,10 +42,17 @@ function HomePage() {
             </div>
 
             <div className="flex gap-3">
-              <Link to="/controller/test-instance">
+              <Link to="/standalone">
                 <Button variant="primary" size="sm">
+                  <TestTube2 className="w-4 h-4 mr-2" />
+                  Teste Standalone
+                </Button>
+              </Link>
+
+              <Link to="/controller/test-instance">
+                <Button variant="secondary" size="sm">
                   <Settings className="w-4 h-4 mr-2" />
-                  Controller
+                  Controller (Router)
                 </Button>
               </Link>
 
@@ -55,9 +62,9 @@ function HomePage() {
               </Button>
 
               <Link to="/test">
-                <Button variant="secondary" size="sm">
+                <Button variant="ghost" size="sm">
                   <TestTube2 className="w-4 h-4 mr-2" />
-                  Modo Teste
+                  Modo Teste Antigo
                 </Button>
               </Link>
             </div>
