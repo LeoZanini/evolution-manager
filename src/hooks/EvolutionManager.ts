@@ -2,8 +2,10 @@ import axios, { AxiosInstance, AxiosResponse } from "axios";
 
 // Interfaces para os tipos de dados da API
 export interface InstanceData {
+  id?: string;
   name: string;
-  status: "connected" | "disconnected" | "connecting";
+  status?: "connected" | "disconnected" | "connecting"; // Campo legacy
+  connectionStatus?: "open" | "close" | "connecting"; // Campo real da API
   webhook?: string;
   integration?: string;
   connectionState?: string;

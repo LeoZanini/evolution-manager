@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { InstanceController } from "../../components/InstanceController";
 import { Button } from "../../components/ui/Button";
 import { ArrowLeft, Home } from "lucide-react";
 
 function InstanceControllerPage() {
   const { instanceId } = useParams<{ instanceId: string }>();
+  const navigate = useNavigate();
   const [baseUrl] = useState(
     import.meta.env.VITE_EVOLUTION_BASE_URL ||
       "https://evolution.kodama.solutions/"
@@ -20,6 +21,28 @@ function InstanceControllerPage() {
     apiKey: apiKey ? "Presente" : "Ausente",
     instanceId,
   });
+
+  // Handlers úteis para ações de instância
+  const handleInstanceCreated = (name: string) => {
+    console.log(`✅ Instância criada: ${name}`);
+    // Poderia redirecionar ou mostrar toast de sucesso
+  };
+
+  const handleInstanceDeleted = (name: string) => {
+    console.log(`🗑️ Instância deletada: ${name}`);
+    // Redirecionar para a página principal após deletar
+    navigate("/");
+  };
+
+  const handleInstanceConnected = (name: string) => {
+    console.log(`🔗 Instância conectada: ${name}`);
+    // Poderia mostrar notificação de sucesso
+  };
+
+  const handleInstanceDisconnected = (name: string) => {
+    console.log(`🔌 Instância desconectada: ${name}`);
+    // Poderia mostrar status atualizado
+  };
 
   return (
     <div
@@ -74,14 +97,14 @@ function InstanceControllerPage() {
               baseUrl={baseUrl}
               apiKey={apiKey}
               instanceName={instanceId}
-              showControls={true}
-              showStatus={true}
               showSettings={true}
               showThemeToggle={true}
               showThemeCustomizer={true}
-              onInstanceCreated={(name) => {
-                console.log(`Instância criada: ${name}`);
-              }}
+              hideDeleteButton={true} // ✅ Default esconder botão Excluir
+              onInstanceCreated={handleInstanceCreated}
+              onInstanceDeleted={handleInstanceDeleted}
+              onInstanceConnected={handleInstanceConnected}
+              onInstanceDisconnected={handleInstanceDisconnected}
             />
           ) : (
             <div

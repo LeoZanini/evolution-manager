@@ -1,5 +1,4 @@
 import React from "react";
-import { Link as RouterLink } from "react-router-dom";
 import { Card } from "./ui/Card";
 import { Button } from "./ui/Button";
 import { Loading } from "./ui/Loading";
@@ -11,9 +10,7 @@ import {
   Trash2,
   Users,
   MessageCircle,
-  Monitor,
 } from "lucide-react";
-import clsx from "clsx";
 
 interface InstanceCardProps {
   instance: InstanceData & {
@@ -25,6 +22,7 @@ interface InstanceCardProps {
   onDisconnect?: (instanceName: string) => void;
   onDelete?: (instanceName: string) => void;
   onSettings?: (instanceName: string) => void;
+  hideDeleteButton?: boolean; // ✅ Nova prop para esconder botão Excluir
 }
 
 export const InstanceCard: React.FC<InstanceCardProps> = ({
@@ -33,14 +31,14 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
   onDisconnect,
   onDelete,
   onSettings,
+  hideDeleteButton = true, // ✅ Default = true (escondido)
 }) => {
   const getStatusInfo = () => {
     if (instance.isGeneratingQR) {
       return {
         text: "Gerando QR Code...",
-        bg: "bg-blue-50 dark:bg-blue-900/20",
-        border: "border-blue-200 dark:border-blue-800",
-        badge: "bg-blue-500",
+        badgeColor: "var(--theme-primary, #3b82f6)",
+        textColor: "var(--theme-primary, #3b82f6)",
         showLoader: true,
       };
     }
@@ -48,9 +46,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
     if (instance.qrCode) {
       return {
         text: "Escaneie com seu celular",
-        bg: "bg-yellow-50 dark:bg-yellow-900/20",
-        border: "border-yellow-200 dark:border-yellow-800",
-        badge: "bg-yellow-500",
+        badgeColor: "var(--theme-warning, #f59e0b)",
+        textColor: "var(--theme-warning, #f59e0b)",
         showQR: true,
       };
     }
@@ -58,9 +55,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
     if (instance.isConnecting) {
       return {
         text: "Conectando...",
-        bg: "bg-orange-50 dark:bg-orange-900/20",
-        border: "border-orange-200 dark:border-orange-800",
-        badge: "bg-orange-500",
+        badgeColor: "var(--theme-warning, #f97316)",
+        textColor: "var(--theme-warning, #f97316)",
         showLoader: true,
       };
     }
@@ -69,25 +65,22 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
       case "connected":
         return {
           text: "Conectado",
-          bg: "bg-green-50 dark:bg-green-900/20",
-          border: "border-green-200 dark:border-green-800",
-          badge: "bg-green-500",
+          badgeColor: "var(--theme-success, #10b981)",
+          textColor: "var(--theme-success, #10b981)",
           showStats: true,
         };
       case "connecting":
         return {
           text: "Conectando",
-          bg: "bg-orange-50 dark:bg-orange-900/20",
-          border: "border-orange-200 dark:border-orange-800",
-          badge: "bg-orange-500",
+          badgeColor: "var(--theme-warning, #f97316)",
+          textColor: "var(--theme-warning, #f97316)",
           showLoader: true,
         };
       default:
         return {
           text: "Desconectado",
-          bg: "bg-red-50 dark:bg-red-900/20",
-          border: "border-red-200 dark:border-red-800",
-          badge: "bg-red-500",
+          badgeColor: "var(--theme-danger, #ef4444)",
+          textColor: "var(--theme-danger, #ef4444)",
         };
     }
   };
@@ -96,21 +89,31 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
 
   return (
     <Card
-      className={clsx(
-        "transition-all duration-200",
-        statusInfo.bg,
-        statusInfo.border
-      )}
+      style={{
+        backgroundColor: "var(--theme-background)",
+        borderColor: "var(--theme-border)",
+        color: "var(--theme-foreground)",
+      }}
+      className="transition-all duration-200"
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-3">
         <div className="flex items-center space-x-3">
-          <div className={clsx("w-3 h-3 rounded-full", statusInfo.badge)} />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: statusInfo.badgeColor }}
+          />
+          <h3
+            className="text-lg font-medium"
+            style={{ color: "var(--theme-foreground)" }}
+          >
             {instance.name}
           </h3>
         </div>
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span
+          className="text-sm font-medium"
+          style={{ color: statusInfo.textColor }}
+        >
           {statusInfo.text}
         </span>
       </div>
@@ -120,14 +123,23 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
         {/* QR Code Section */}
         {statusInfo.showQR && instance.qrCode && (
           <div className="mb-4 flex flex-col items-center space-y-3">
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div
+              className="p-4 rounded-lg shadow-sm border"
+              style={{
+                backgroundColor: "var(--theme-background)",
+                borderColor: "var(--theme-border)",
+              }}
+            >
               <img
                 src={instance.qrCode}
                 alt="QR Code para conectar WhatsApp"
                 className="w-32 h-32"
               />
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
+            <p
+              className="text-sm text-center"
+              style={{ color: "var(--theme-secondary)" }}
+            >
               Abra o WhatsApp no seu celular e escaneie este código
             </p>
           </div>
@@ -136,10 +148,19 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
         {/* Loading State */}
         {statusInfo.showLoader && (
           <div className="mb-4 flex flex-col items-center space-y-3">
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+            <div
+              className="p-8 rounded-lg shadow-sm border flex items-center justify-center"
+              style={{
+                backgroundColor: "var(--theme-background)",
+                borderColor: "var(--theme-border)",
+              }}
+            >
               <Loading size="md" />
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
+            <p
+              className="text-sm text-center"
+              style={{ color: "var(--theme-secondary)" }}
+            >
               {statusInfo.text}
             </p>
           </div>
@@ -148,25 +169,55 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
         {/* Stats (when connected) */}
         {statusInfo.showStats && (
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div
+              className="p-3 rounded-lg border"
+              style={{
+                backgroundColor: "var(--theme-background)",
+                borderColor: "var(--theme-border)",
+              }}
+            >
               <div className="flex items-center space-x-2">
-                <Users className="w-4 h-4 text-blue-500" />
-                <span className="text-sm text-gray-600 dark:text-gray-300">
+                <Users
+                  className="w-4 h-4"
+                  style={{ color: "var(--theme-primary)" }}
+                />
+                <span
+                  className="text-sm"
+                  style={{ color: "var(--theme-secondary)" }}
+                >
                   Contatos
                 </span>
               </div>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white mt-1">
+              <p
+                className="text-lg font-semibold mt-1"
+                style={{ color: "var(--theme-foreground)" }}
+              >
                 {instance.contactsCount || 0}
               </p>
             </div>
-            <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div
+              className="p-3 rounded-lg border"
+              style={{
+                backgroundColor: "var(--theme-background)",
+                borderColor: "var(--theme-border)",
+              }}
+            >
               <div className="flex items-center space-x-2">
-                <MessageCircle className="w-4 h-4 text-green-500" />
-                <span className="text-sm text-gray-600 dark:text-gray-300">
+                <MessageCircle
+                  className="w-4 h-4"
+                  style={{ color: "var(--theme-success)" }}
+                />
+                <span
+                  className="text-sm"
+                  style={{ color: "var(--theme-secondary)" }}
+                >
                   Chats
                 </span>
               </div>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white mt-1">
+              <p
+                className="text-lg font-semibold mt-1"
+                style={{ color: "var(--theme-foreground)" }}
+              >
                 {instance.chatsCount || 0}
               </p>
             </div>
@@ -174,25 +225,29 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
         )}
 
         {/* Instance Details */}
-        <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300 mb-4">
+        <div
+          className="space-y-2 text-sm mb-4"
+          style={{ color: "var(--theme-secondary)" }}
+        >
           <div>
             <span className="font-medium">Integração:</span>{" "}
-            <span className="text-gray-900 dark:text-white">
+            <span style={{ color: "var(--theme-foreground)" }}>
               {instance.integration || "WHATSAPP-BAILEYS"}
             </span>
           </div>
           {instance.connectionState && (
             <div>
               <span className="font-medium">Estado:</span>{" "}
-              <span className="text-gray-900 dark:text-white">
+              <span style={{ color: "var(--theme-foreground)" }}>
                 {instance.connectionState}
               </span>
             </div>
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-2">
+        {/* Action Buttons - ✅ Reordenados e alinhados à direita */}
+        <div className="flex justify-end gap-2">
+          {/* ✅ 1. Botão Conectar/Desconectar PRIMEIRO */}
           {instance.status === "connected" ? (
             <Button
               onClick={() => onDisconnect?.(instance.name)}
@@ -216,17 +271,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
             </Button>
           )}
 
-          <RouterLink to={`/controller/${instance.name}`}>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="flex items-center space-x-1"
-            >
-              <Monitor className="w-4 h-4" />
-              <span>Controller</span>
-            </Button>
-          </RouterLink>
-
+          {/* ✅ 2. Botão Config */}
           <Button
             onClick={() => onSettings?.(instance.name)}
             size="sm"
@@ -237,15 +282,18 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
             <span>Config</span>
           </Button>
 
-          <Button
-            onClick={() => onDelete?.(instance.name)}
-            size="sm"
-            variant="danger"
-            className="flex items-center space-x-1"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span>Excluir</span>
-          </Button>
+          {/* ✅ 3. Botão Excluir (apenas se não estiver escondido) */}
+          {!hideDeleteButton && (
+            <Button
+              onClick={() => onDelete?.(instance.name)}
+              size="sm"
+              variant="danger"
+              className="flex items-center space-x-1"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Excluir</span>
+            </Button>
+          )}
         </div>
       </div>
     </Card>

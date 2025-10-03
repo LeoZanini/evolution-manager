@@ -12,7 +12,8 @@ interface ApiConfig {
 }
 
 const BASE_URL =
-  import.meta.env.VITE_EVOLUTION_API_URL || "https://api.evolutionapi.com";
+  import.meta.env.VITE_EVOLUTION_BASE_URL ||
+  "https://evolution.kodama.solutions";
 const API_KEY =
   import.meta.env.VITE_EVOLUTION_API_KEY || "c770209f03d6c959088734dd153c9b16";
 
@@ -74,7 +75,7 @@ export async function testIntegration(): Promise<TestResult[]> {
         // Primeiro lista as instâncias
         const instances = await apiClient.request("/instance/fetchInstances");
         if (instances && instances.length > 0) {
-          const instanceName = instances[0].instance.instanceName;
+          const instanceName = instances[0].name; // Mudou de instances[0].instance.instanceName para instances[0].name
           return apiClient.request(`/instance/connectionState/${instanceName}`);
         }
         throw new Error("Nenhuma instância encontrada para testar");

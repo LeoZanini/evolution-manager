@@ -126,20 +126,48 @@ export const useEvolutionManager = (
     data?: any
   ) => {
     const instanceSubscribers = subscribers.current.get(instanceName);
+    console.log(
+      `[notifySubscribers] 📢 Notificando ${
+        instanceSubscribers?.length || 0
+      } subscribers para ${instanceName}: ${state}`
+    );
     if (instanceSubscribers) {
-      instanceSubscribers.forEach((callback) => callback({ state, data }));
+      instanceSubscribers.forEach((callback, index) => {
+        console.log(
+          `[notifySubscribers] 📞 Chamando callback ${index} para ${instanceName}`
+        );
+        callback({ state, data });
+      });
+    } else {
+      console.log(
+        `[notifySubscribers] ⚠️ Nenhum subscriber encontrado para ${instanceName}`
+      );
     }
   };
 
   const setInstanceState = useCallback(
     (instanceName: string, state: InstanceState, data?: any) => {
-      console.log(`[State] ${instanceName}: ${state}`, data || "");
+      console.log(
+        `[setInstanceState] 🎯 ${instanceName}: ${state}`,
+        data || ""
+      );
+      const previousState = instanceStates.current.get(instanceName);
       instanceStates.current.set(instanceName, state);
+
       if (data) {
         const currentData = instanceData.current.get(instanceName) || {};
         instanceData.current.set(instanceName, { ...currentData, ...data });
       }
+
+      console.log(
+        `[setInstanceState] 📢 Notificando ${
+          subscribers.current.get(instanceName)?.length || 0
+        } subscribers para ${instanceName}`
+      );
       notifySubscribers(instanceName, state, data);
+      console.log(
+        `[setInstanceState] ✅ Estado atualizado: ${instanceName} ${previousState} → ${state}`
+      );
     },
     []
   );
@@ -156,16 +184,24 @@ export const useEvolutionManager = (
       instanceName: string,
       callback: (payload: { state: InstanceState; data?: any }) => void
     ) => {
+      console.log(`[subscribe] 📝 Adicionando subscriber para ${instanceName}`);
       const instanceSubscribers = subscribers.current.get(instanceName) || [];
       instanceSubscribers.push(callback);
       subscribers.current.set(instanceName, instanceSubscribers);
+      console.log(
+        `[subscribe] ✅ Total de subscribers para ${instanceName}: ${instanceSubscribers.length}`
+      );
 
       // Retorna uma função de unsubscribe
       return () => {
+        console.log(`[subscribe] 🧹 Removendo subscriber para ${instanceName}`);
         const currentSubscribers = subscribers.current.get(instanceName) || [];
-        subscribers.current.set(
-          instanceName,
-          currentSubscribers.filter((cb) => cb !== callback)
+        const newSubscribers = currentSubscribers.filter(
+          (cb) => cb !== callback
+        );
+        subscribers.current.set(instanceName, newSubscribers);
+        console.log(
+          `[subscribe] ✅ Subscribers restantes para ${instanceName}: ${newSubscribers.length}`
         );
       };
     },
@@ -187,10 +223,10 @@ export const useEvolutionManager = (
       if (pollingIntervals.current.has(instanceName)) return; // Already polling
 
       console.log(`[Polling] Starting for ${instanceName}`);
-      
+
       // Initialize polling interval for this instance
       pollingCurrentIntervals.current.set(instanceName, POLLING_INTERVAL_MS);
-      
+
       const pollInstance = async () => {
         if (!manager) return;
 
@@ -221,7 +257,10 @@ export const useEvolutionManager = (
           }
 
           // Reset interval to base value on successful poll
-          pollingCurrentIntervals.current.set(instanceName, POLLING_INTERVAL_MS);
+          pollingCurrentIntervals.current.set(
+            instanceName,
+            POLLING_INTERVAL_MS
+          );
 
           // Stop polling if the instance reaches a stable state
           if (
@@ -231,22 +270,30 @@ export const useEvolutionManager = (
             stopPolling(instanceName);
             return;
           }
-          
+
           // Schedule next poll with current interval
-          const currentInterval = pollingCurrentIntervals.current.get(instanceName) || POLLING_INTERVAL_MS;
+          const currentInterval =
+            pollingCurrentIntervals.current.get(instanceName) ||
+            POLLING_INTERVAL_MS;
           const timeoutId = setTimeout(pollInstance, currentInterval);
           pollingIntervals.current.set(instanceName, timeoutId);
-          
         } catch (error) {
           console.error(`[Polling] Error for ${instanceName}:`, error);
-          
+
           // Implement exponential backoff on error
-          const currentInterval = pollingCurrentIntervals.current.get(instanceName) || POLLING_INTERVAL_MS;
-          const newInterval = Math.min(currentInterval * POLLING_BACKOFF_MULTIPLIER, MAX_POLLING_INTERVAL_MS);
+          const currentInterval =
+            pollingCurrentIntervals.current.get(instanceName) ||
+            POLLING_INTERVAL_MS;
+          const newInterval = Math.min(
+            currentInterval * POLLING_BACKOFF_MULTIPLIER,
+            MAX_POLLING_INTERVAL_MS
+          );
           pollingCurrentIntervals.current.set(instanceName, newInterval);
-          
-          console.log(`[Polling] Backing off to ${newInterval}ms for ${instanceName}`);
-          
+
+          console.log(
+            `[Polling] Backing off to ${newInterval}ms for ${instanceName}`
+          );
+
           // Don't stop polling on error, just increase interval
           const timeoutId = setTimeout(pollInstance, newInterval);
           pollingIntervals.current.set(instanceName, timeoutId);
@@ -297,22 +344,40 @@ export const useEvolutionManager = (
 
   // Data fetching methods
   const refreshInstances = useCallback(async (): Promise<void> => {
-    if (!manager) return;
+    console.log(`[useEvolutionManager] 🔄 Iniciando refreshInstances`);
+    if (!manager) {
+      console.log(
+        `[useEvolutionManager] ⚠️ Manager não inicializado, abortando refreshInstances`
+      );
+      return;
+    }
 
     setLoading(true);
     setError(null);
     try {
+      console.log(`[useEvolutionManager] 📡 Fazendo chamada listInstances`);
       const instancesData = await manager.listInstances();
+      console.log(
+        `[useEvolutionManager] ✅ Recebidas ${instancesData.length} instâncias:`,
+        instancesData
+      );
+
       setInstances(instancesData);
+
       // Update states based on fetched data
       instancesData.forEach((instance: InstanceData) => {
         const currentState = getInstanceState(instance.name);
-        const apiState = instance.status;
+        // ✅ CORREÇÃO: Usar connectionStatus ao invés de status
+        const apiState = (instance as any).connectionStatus || instance.status;
+        console.log(
+          `[useEvolutionManager] 🔍 Processando instância ${instance.name}: API=${apiState}, Estado Atual=${currentState}`
+        );
+
         let targetState: InstanceState;
 
-        if (apiState === "connected") {
+        if (apiState === "open" || apiState === "connected") {
           targetState = InstanceState.CONNECTED;
-        } else if (apiState === "disconnected") {
+        } else if (apiState === "close" || apiState === "disconnected") {
           targetState =
             currentState === InstanceState.CREATING ||
             currentState === InstanceState.CREATED
@@ -324,23 +389,39 @@ export const useEvolutionManager = (
           targetState = InstanceState.UNKNOWN;
         }
 
+        console.log(
+          `[useEvolutionManager] 🎯 Estado alvo calculado para ${instance.name}: ${targetState}`
+        );
+
         // Only update if the state is different and not in a transient state
-        if (
+        const transientStates = [
+          InstanceState.CONNECTING,
+          InstanceState.DISCONNECTING,
+          InstanceState.DELETING,
+          InstanceState.GENERATING_QR,
+        ];
+
+        const shouldUpdate =
           currentState !== targetState &&
-          ![
-            InstanceState.CONNECTING,
-            InstanceState.DISCONNECTING,
-            InstanceState.DELETING,
-            InstanceState.GENERATING_QR,
-          ].includes(currentState)
-        ) {
+          !transientStates.includes(currentState);
+
+        console.log(
+          `[useEvolutionManager] 🤔 Deve atualizar estado para ${instance.name}? ${shouldUpdate} (atual: ${currentState} → alvo: ${targetState})`
+        );
+
+        if (shouldUpdate) {
+          console.log(
+            `[useEvolutionManager] 🔄 Atualizando estado de ${instance.name}: ${currentState} → ${targetState}`
+          );
           setInstanceState(instance.name, targetState);
         }
       });
     } catch (err: any) {
+      console.error(`[useEvolutionManager] ❌ Erro no refreshInstances:`, err);
       handleError(err);
     } finally {
       setLoading(false);
+      console.log(`[useEvolutionManager] ✅ refreshInstances finalizado`);
     }
   }, [manager, handleError, getInstanceState, setInstanceState]);
 
