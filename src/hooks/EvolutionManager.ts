@@ -611,35 +611,4 @@ export default class EvolutionManager {
     }
   }
 
-  // Legacy method names for backward compatibility
-  async get(instanceName: string): Promise<InstanceData> {
-    return this.getInstance(instanceName);
-  }
-
-  async create(
-    instanceName: string,
-    integration?: string
-  ): Promise<ApiResponse> {
-    return this.createInstance(instanceName, integration);
-  }
-
-  async list(): Promise<InstanceData[]> {
-    return this.listInstances();
-  }
-
-  async connect(instanceName: string): Promise<ApiResponse> {
-    return this.connectInstance(instanceName);
-  }
-
-  async disconnect(instanceName: string): Promise<ApiResponse> {
-    return this.disconnectInstance(instanceName);
-  }
-
-  async getQRCode(instanceName: string): Promise<ApiResponse> {
-    return this.connectInstance(instanceName);
-  }
-
-  async getStatus(): Promise<ApiResponse> {
-    return this.getApiStatus();
-  }
 }
