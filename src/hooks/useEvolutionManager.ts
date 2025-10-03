@@ -405,7 +405,7 @@ export const useEvolutionManager = (
         setLoading(false);
       }
     },
-    [manager]
+    [manager, refreshInstances, handleError]
   );
 
   const deleteInstance = useCallback(
@@ -425,7 +425,7 @@ export const useEvolutionManager = (
         setLoading(false);
       }
     },
-    [manager]
+    [manager, refreshInstances, handleError]
   );
 
   const connectInstance = useCallback(
@@ -464,7 +464,7 @@ export const useEvolutionManager = (
         setLoading(false);
       }
     },
-    [manager]
+    [manager, refreshInstances, handleError]
   );
 
   const getInstanceStatus = useCallback(
@@ -480,9 +480,8 @@ export const useEvolutionManager = (
         throw err;
       }
     },
-    [manager]
+    [manager, handleError]
   );
-
   const fetchSingleInstance = useCallback(
     async (name: string): Promise<InstanceData | null> => {
       if (!manager) throw new Error("Manager not initialized");
@@ -628,7 +627,7 @@ export const useEvolutionManager = (
         setLoading(false);
       }
     },
-    [manager]
+    [manager, handleError]
   );
 
   const refreshChats = useCallback(
@@ -646,7 +645,7 @@ export const useEvolutionManager = (
         setLoading(false);
       }
     },
-    [manager]
+    [manager, handleError]
   );
 
   const refreshMessages = useCallback(
@@ -672,7 +671,7 @@ export const useEvolutionManager = (
         setLoading(false);
       }
     },
-    [manager]
+    [manager, handleError]
   );
 
   // Auto-refresh instances when manager is ready
