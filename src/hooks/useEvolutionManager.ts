@@ -7,6 +7,11 @@ import EvolutionManager, {
   ApiResponse,
 } from "./EvolutionManager";
 
+// Polling configuration constants
+const POLLING_INTERVAL_MS = 2000;
+const MAX_POLLING_INTERVAL_MS = 10000;
+const POLLING_BACKOFF_MULTIPLIER = 2;
+
 export enum InstanceState {
   INITIALIZING = "INITIALIZING", // Estado inicial antes de qualquer ação
   CREATING = "CREATING", // A criação da instância foi solicitada
@@ -113,6 +118,7 @@ export const useEvolutionManager = (
     Map<string, ((payload: { state: InstanceState; data?: any }) => void)[]>
   >(new Map());
   const pollingIntervals = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const pollingCurrentIntervals = useRef<Map<string, number>>(new Map()); // Track current interval for each instance
 
   const notifySubscribers = (
     instanceName: string,
@@ -170,8 +176,9 @@ export const useEvolutionManager = (
   const stopPolling = useCallback((instanceName: string) => {
     if (pollingIntervals.current.has(instanceName)) {
       console.log(`[Polling] Stopping for ${instanceName}`);
-      clearInterval(pollingIntervals.current.get(instanceName));
+      clearTimeout(pollingIntervals.current.get(instanceName)); // Use clearTimeout instead of clearInterval
       pollingIntervals.current.delete(instanceName);
+      pollingCurrentIntervals.current.delete(instanceName); // Clean up backoff state
     }
   }, []);
 
@@ -180,7 +187,11 @@ export const useEvolutionManager = (
       if (pollingIntervals.current.has(instanceName)) return; // Already polling
 
       console.log(`[Polling] Starting for ${instanceName}`);
-      const intervalId = setInterval(async () => {
+      
+      // Initialize polling interval for this instance
+      pollingCurrentIntervals.current.set(instanceName, POLLING_INTERVAL_MS);
+      
+      const pollInstance = async () => {
         if (!manager) return;
 
         try {
@@ -209,21 +220,41 @@ export const useEvolutionManager = (
             setInstanceState(instanceName, nextState);
           }
 
+          // Reset interval to base value on successful poll
+          pollingCurrentIntervals.current.set(instanceName, POLLING_INTERVAL_MS);
+
           // Stop polling if the instance reaches a stable state
           if (
             nextState === InstanceState.CONNECTED ||
             nextState === InstanceState.DISCONNECTED
           ) {
             stopPolling(instanceName);
+            return;
           }
+          
+          // Schedule next poll with current interval
+          const currentInterval = pollingCurrentIntervals.current.get(instanceName) || POLLING_INTERVAL_MS;
+          const timeoutId = setTimeout(pollInstance, currentInterval);
+          pollingIntervals.current.set(instanceName, timeoutId);
+          
         } catch (error) {
           console.error(`[Polling] Error for ${instanceName}:`, error);
-          setInstanceState(instanceName, InstanceState.ERROR);
-          stopPolling(instanceName);
+          
+          // Implement exponential backoff on error
+          const currentInterval = pollingCurrentIntervals.current.get(instanceName) || POLLING_INTERVAL_MS;
+          const newInterval = Math.min(currentInterval * POLLING_BACKOFF_MULTIPLIER, MAX_POLLING_INTERVAL_MS);
+          pollingCurrentIntervals.current.set(instanceName, newInterval);
+          
+          console.log(`[Polling] Backing off to ${newInterval}ms for ${instanceName}`);
+          
+          // Don't stop polling on error, just increase interval
+          const timeoutId = setTimeout(pollInstance, newInterval);
+          pollingIntervals.current.set(instanceName, timeoutId);
         }
-      }, 2000); // Poll every 2 seconds
+      };
 
-      pollingIntervals.current.set(instanceName, intervalId);
+      // Start first poll immediately
+      pollInstance();
     },
     [manager, getInstanceState, setInstanceState, stopPolling]
   );
