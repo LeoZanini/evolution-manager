@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import EvolutionManager, {
   InstanceData,
   MessageData,
@@ -6,6 +6,22 @@ import EvolutionManager, {
   ChatData,
   ApiResponse,
 } from "./EvolutionManager";
+
+export enum InstanceState {
+  INITIALIZING = "INITIALIZING", // Estado inicial antes de qualquer ação
+  CREATING = "CREATING", // A criação da instância foi solicitada
+  CREATED = "CREATED", // A instância foi criada, mas está desconectada
+  CONNECTING = "CONNECTING", // A conexão foi solicitada, aguardando QR code ou conexão
+  GENERATING_QR = "GENERATING_QR", // Gerando o QR code
+  QR_GENERATED = "QR_GENERATED", // QR code gerado e pronto para ser escaneado
+  CONNECTED = "CONNECTED", // A instância está conectada e operacional
+  DISCONNECTING = "DISCONNECTING", // A desconexão foi solicitada
+  DISCONNECTED = "DISCONNECTED", // A instância está desconectada
+  DELETING = "DELETING", // A exclusão da instância foi solicitada
+  DELETED = "DELETED", // A instância foi excluída
+  ERROR = "ERROR", // Ocorreu um erro em alguma operação
+  UNKNOWN = "UNKNOWN", // Estado desconhecido ou não foi possível determinar
+}
 
 export interface EvolutionManagerConfig {
   baseUrl: string;
@@ -27,6 +43,20 @@ export interface UseEvolutionManagerReturn {
   disconnectInstance: (name: string) => Promise<ApiResponse>;
   getInstanceStatus: (name: string) => Promise<ApiResponse>;
   fetchSingleInstance: (name: string) => Promise<InstanceData | null>;
+  // State Management
+  getInstanceState: (instanceName: string) => InstanceState;
+  subscribe: (
+    instanceName: string,
+    callback: (payload: { state: InstanceState; data?: any }) => void
+  ) => () => void;
+  // Instance methods with state
+  createInstanceWithState: (
+    name: string,
+    integration?: string
+  ) => Promise<void>;
+  connectInstanceWithState: (name: string) => Promise<void>;
+  disconnectInstanceWithState: (name: string) => Promise<void>;
+  deleteInstanceWithState: (name: string) => Promise<void>;
   // Message methods
   sendMessage: (
     instanceName: string,
@@ -76,6 +106,137 @@ export const useEvolutionManager = (
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Centralized state management
+  const instanceStates = useRef<Map<string, InstanceState>>(new Map());
+  const instanceData = useRef<Map<string, { qrCode?: string }>>(new Map()); // Store additional data like QR codes
+  const subscribers = useRef<
+    Map<string, ((payload: { state: InstanceState; data?: any }) => void)[]>
+  >(new Map());
+  const pollingIntervals = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+  const notifySubscribers = (
+    instanceName: string,
+    state: InstanceState,
+    data?: any
+  ) => {
+    const instanceSubscribers = subscribers.current.get(instanceName);
+    if (instanceSubscribers) {
+      instanceSubscribers.forEach((callback) => callback({ state, data }));
+    }
+  };
+
+  const setInstanceState = useCallback(
+    (instanceName: string, state: InstanceState, data?: any) => {
+      console.log(`[State] ${instanceName}: ${state}`, data || "");
+      instanceStates.current.set(instanceName, state);
+      if (data) {
+        const currentData = instanceData.current.get(instanceName) || {};
+        instanceData.current.set(instanceName, { ...currentData, ...data });
+      }
+      notifySubscribers(instanceName, state, data);
+    },
+    []
+  );
+
+  const getInstanceState = useCallback(
+    (instanceName: string): InstanceState => {
+      return instanceStates.current.get(instanceName) || InstanceState.UNKNOWN;
+    },
+    []
+  );
+
+  const subscribe = useCallback(
+    (
+      instanceName: string,
+      callback: (payload: { state: InstanceState; data?: any }) => void
+    ) => {
+      const instanceSubscribers = subscribers.current.get(instanceName) || [];
+      instanceSubscribers.push(callback);
+      subscribers.current.set(instanceName, instanceSubscribers);
+
+      // Retorna uma função de unsubscribe
+      return () => {
+        const currentSubscribers = subscribers.current.get(instanceName) || [];
+        subscribers.current.set(
+          instanceName,
+          currentSubscribers.filter((cb) => cb !== callback)
+        );
+      };
+    },
+    []
+  );
+
+  // Polling logic
+  const stopPolling = useCallback((instanceName: string) => {
+    if (pollingIntervals.current.has(instanceName)) {
+      console.log(`[Polling] Stopping for ${instanceName}`);
+      clearInterval(pollingIntervals.current.get(instanceName));
+      pollingIntervals.current.delete(instanceName);
+    }
+  }, []);
+
+  const startPolling = useCallback(
+    (instanceName: string) => {
+      if (pollingIntervals.current.has(instanceName)) return; // Already polling
+
+      console.log(`[Polling] Starting for ${instanceName}`);
+      const intervalId = setInterval(async () => {
+        if (!manager) return;
+
+        try {
+          const response = await manager.getInstanceStatus(instanceName);
+          const apiState = response.data?.instance?.state; // e.g., "open", "close", "connecting"
+          const currentState = getInstanceState(instanceName);
+
+          let nextState: InstanceState | null = null;
+
+          if (apiState === "open" && currentState !== InstanceState.CONNECTED) {
+            nextState = InstanceState.CONNECTED;
+          } else if (
+            apiState === "close" &&
+            currentState !== InstanceState.DISCONNECTED &&
+            currentState !== InstanceState.CREATED
+          ) {
+            nextState = InstanceState.DISCONNECTED;
+          } else if (
+            apiState === "connecting" &&
+            currentState !== InstanceState.CONNECTING
+          ) {
+            nextState = InstanceState.CONNECTING;
+          }
+
+          if (nextState) {
+            setInstanceState(instanceName, nextState);
+          }
+
+          // Stop polling if the instance reaches a stable state
+          if (
+            nextState === InstanceState.CONNECTED ||
+            nextState === InstanceState.DISCONNECTED
+          ) {
+            stopPolling(instanceName);
+          }
+        } catch (error) {
+          console.error(`[Polling] Error for ${instanceName}:`, error);
+          setInstanceState(instanceName, InstanceState.ERROR);
+          stopPolling(instanceName);
+        }
+      }, 2000); // Poll every 2 seconds
+
+      pollingIntervals.current.set(instanceName, intervalId);
+    },
+    [manager, getInstanceState, setInstanceState, stopPolling]
+  );
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      pollingIntervals.current.forEach((_, instanceName) => {
+        stopPolling(instanceName);
+      });
+    };
+  }, [stopPolling]);
+
   // Initialize manager
   useEffect(() => {
     if (config.baseUrl && config.apiKey) {
@@ -102,6 +263,84 @@ export const useEvolutionManager = (
   const clearError = useCallback(() => {
     setError(null);
   }, []);
+
+  // ##################################
+  // Instance Methods with State
+  // ##################################
+
+  const createInstanceWithState = useCallback(
+    async (name: string, integration?: string) => {
+      if (!manager) throw new Error("Manager not initialized");
+      setInstanceState(name, InstanceState.CREATING);
+      try {
+        await manager.createInstance(name, integration);
+        setInstanceState(name, InstanceState.CREATED);
+        await refreshInstances();
+      } catch (err: any) {
+        setInstanceState(name, InstanceState.ERROR);
+        handleError(err);
+      }
+    },
+    [manager, setInstanceState, handleError]
+  );
+
+  const connectInstanceWithState = useCallback(
+    async (name: string) => {
+      if (!manager) throw new Error("Manager not initialized");
+      setInstanceState(name, InstanceState.GENERATING_QR);
+      try {
+        const response = await manager.connectInstance(name);
+        if (response.data?.qrcode?.base64) {
+          const qrCode = response.data.qrcode.base64;
+          setInstanceState(name, InstanceState.QR_GENERATED, { qrCode });
+        } else {
+          setInstanceState(name, InstanceState.CONNECTING);
+        }
+        startPolling(name); // Start polling after connection attempt
+      } catch (err: any) {
+        setInstanceState(name, InstanceState.ERROR);
+        handleError(err);
+      }
+    },
+    [manager, setInstanceState, handleError, startPolling]
+  );
+
+  const disconnectInstanceWithState = useCallback(
+    async (name: string) => {
+      if (!manager) throw new Error("Manager not initialized");
+      setInstanceState(name, InstanceState.DISCONNECTING);
+      try {
+        await manager.disconnectInstance(name);
+        setInstanceState(name, InstanceState.DISCONNECTED);
+        stopPolling(name); // Stop polling on disconnect
+        await refreshInstances();
+      } catch (err: any) {
+        setInstanceState(name, InstanceState.ERROR);
+        handleError(err);
+      }
+    },
+    [manager, setInstanceState, handleError]
+  );
+
+  const deleteInstanceWithState = useCallback(
+    async (name: string) => {
+      if (!manager) throw new Error("Manager not initialized");
+      setInstanceState(name, InstanceState.DELETING);
+      try {
+        await manager.deleteInstance(name);
+        setInstanceState(name, InstanceState.DELETED);
+        stopPolling(name); // Stop polling on delete
+        instanceStates.current.delete(name);
+        instanceData.current.delete(name); // Also clear instance data
+        subscribers.current.delete(name);
+        await refreshInstances();
+      } catch (err: any) {
+        setInstanceState(name, InstanceState.ERROR);
+        handleError(err);
+      }
+    },
+    [manager, setInstanceState, handleError]
+  );
 
   // Instance methods
   const createInstance = useCallback(
@@ -205,11 +444,11 @@ export const useEvolutionManager = (
 
       try {
         setError(null);
-        const result = await manager.fetchSingleInstance(name);
+        const result = await manager.getInstance(name);
         return result;
       } catch (err: any) {
         handleError(err);
-        throw err;
+        return null; // Add this line
       }
     },
     [manager, handleError]
@@ -236,7 +475,7 @@ export const useEvolutionManager = (
         setLoading(false);
       }
     },
-    [manager]
+    [manager, handleError]
   );
 
   const sendMedia = useCallback(
@@ -244,8 +483,8 @@ export const useEvolutionManager = (
       instanceName: string,
       number: string,
       mediaUrl: string,
-      mediaType: "image" | "video" | "audio" | "document" = "image",
-      caption: string = ""
+      mediaType?: "image" | "video" | "audio" | "document",
+      caption?: string
     ): Promise<ApiResponse> => {
       if (!manager) throw new Error("Manager not initialized");
 
@@ -267,7 +506,7 @@ export const useEvolutionManager = (
         setLoading(false);
       }
     },
-    [manager]
+    [manager, handleError]
   );
 
   const getChatMessages = useCallback(
@@ -279,19 +518,23 @@ export const useEvolutionManager = (
       if (!manager) throw new Error("Manager not initialized");
 
       try {
+        setLoading(true);
         setError(null);
-        const result = await manager.getChatMessages(
+        const messagesData = await manager.getChatMessages(
           instanceName,
           remoteJid,
           limit
         );
-        return result;
+        setMessages(messagesData);
+        return messagesData;
       } catch (err: any) {
         handleError(err);
-        throw err;
+        return [];
+      } finally {
+        setLoading(false);
       }
     },
-    [manager]
+    [manager, handleError]
   );
 
   const markAsRead = useCallback(
@@ -304,6 +547,7 @@ export const useEvolutionManager = (
       if (!manager) throw new Error("Manager not initialized");
 
       try {
+        setLoading(true);
         setError(null);
         const result = await manager.markAsRead(
           instanceName,
@@ -315,26 +559,57 @@ export const useEvolutionManager = (
       } catch (err: any) {
         handleError(err);
         throw err;
+      } finally {
+        setLoading(false);
       }
     },
-    [manager]
+    [manager, handleError]
   );
 
   // Data fetching methods
   const refreshInstances = useCallback(async (): Promise<void> => {
     if (!manager) return;
 
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-      const instancesData = await manager.listInstances(true); // Sempre buscar com stats
+      const instancesData = await manager.listInstances();
       setInstances(instancesData);
+      // Update states based on fetched data
+      instancesData.forEach((instance: InstanceData) => {
+        const currentState = getInstanceState(instance.name);
+        const apiState = instance.status;
+        let targetState: InstanceState;
+
+        if (apiState === "connected") {
+          targetState = InstanceState.CONNECTED;
+        } else if (apiState === "disconnected") {
+          targetState = InstanceState.CREATED; // Or DISCONNECTED if it was previously connected
+        } else if (apiState === "connecting") {
+          targetState = InstanceState.CONNECTING;
+        } else {
+          targetState = InstanceState.UNKNOWN;
+        }
+
+        // Only update if the state is different and not in a transient state
+        if (
+          currentState !== targetState &&
+          ![
+            InstanceState.CONNECTING,
+            InstanceState.DISCONNECTING,
+            InstanceState.DELETING,
+            InstanceState.GENERATING_QR,
+          ].includes(currentState)
+        ) {
+          setInstanceState(instance.name, targetState);
+        }
+      });
     } catch (err: any) {
       handleError(err);
     } finally {
       setLoading(false);
     }
-  }, [manager, handleError]);
+  }, [manager, handleError, getInstanceState, setInstanceState]);
 
   const refreshContacts = useCallback(
     async (instanceName: string): Promise<void> => {
@@ -420,6 +695,14 @@ export const useEvolutionManager = (
     disconnectInstance,
     getInstanceStatus,
     fetchSingleInstance,
+    // State Management
+    getInstanceState,
+    subscribe,
+    // Instance methods with state
+    createInstanceWithState,
+    connectInstanceWithState,
+    disconnectInstanceWithState,
+    deleteInstanceWithState,
     // Message methods
     sendMessage,
     sendMedia,

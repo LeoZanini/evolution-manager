@@ -3,7 +3,7 @@ import clsx from "clsx";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "danger" | "ghost";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "icon";
   children: React.ReactNode;
 }
 
@@ -29,6 +29,7 @@ export const Button: React.FC<ButtonProps> = ({
     sm: "px-3 py-1.5 text-sm",
     md: "px-4 py-2 text-sm",
     lg: "px-6 py-3 text-base",
+    icon: "h-10 w-10",
   };
 
   const getVariantStyles = () => {
@@ -62,9 +63,16 @@ export const Button: React.FC<ButtonProps> = ({
     }
   };
 
+  const variantClasses = clsx(
+    baseClasses,
+    variants[variant],
+    sizes[size],
+    className
+  );
+
   return (
     <button
-      className={clsx(baseClasses, variants[variant], sizes[size], className)}
+      className={variantClasses}
       style={getVariantStyles()}
       disabled={disabled}
       {...props}
