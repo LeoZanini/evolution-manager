@@ -1,6 +1,5 @@
 import { default as React } from 'react';
 import { InstanceData } from '../types';
-
 interface InstanceCardProps {
     instance: InstanceData & {
         qrCode?: string;

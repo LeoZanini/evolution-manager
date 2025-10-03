@@ -1,5 +1,4 @@
 import { default as React } from 'react';
-
 interface ConnectionStatusProps {
     status: string;
     instanceName: string;

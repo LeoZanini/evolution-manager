@@ -6,6 +6,17 @@ export interface InstanceData {
     connectionState?: string;
     contactsCount?: number;
     chatsCount?: number;
+    messagesCount?: number;
+    ownerJid?: string;
+    profileName?: string;
+    profilePicUrl?: string;
+    deviceInfo?: {
+        platform?: string;
+        deviceManufacturer?: string;
+        deviceModel?: string;
+        osVersion?: string;
+        waVersion?: string;
+    };
 }
 export interface MessageData {
     id: string;
@@ -79,6 +90,10 @@ export default class EvolutionManager {
      */
     listInstances(includeStats?: boolean): Promise<InstanceData[]>;
     /**
+     * Fetch a single instance by name with full details
+     */
+    fetchSingleInstance(instanceName: string): Promise<InstanceData | null>;
+    /**
      * Connect an instance and get QR code
      */
     connectInstance(instanceName: string): Promise<ApiResponse>;
@@ -91,6 +106,10 @@ export default class EvolutionManager {
      */
     getChatsCount(instanceName: string): Promise<number>;
     /**
+     * Get messages count for an instance (all chats)
+     */
+    getMessagesCount(instanceName: string): Promise<number>;
+    /**
      * Disconnect/logout an instance
      */
     disconnectInstance(instanceName: string): Promise<ApiResponse>;
@@ -99,9 +118,13 @@ export default class EvolutionManager {
      */
     deleteInstance(instanceName: string): Promise<ApiResponse>;
     /**
-     * Get instance connection status
+     * Get instance connection status with device info
      */
     getInstanceStatus(instanceName: string): Promise<ApiResponse>;
+    /**
+     * Get instance profile information (device info)
+     */
+    getInstanceProfile(instanceName: string): Promise<ApiResponse>;
     /**
      * Send a text message
      */

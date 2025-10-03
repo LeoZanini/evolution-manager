@@ -1,5 +1,4 @@
 import { default as React } from 'react';
-
 interface Message {
     id: string;
     from: string;
