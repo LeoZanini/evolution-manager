@@ -5,7 +5,7 @@ export interface InstanceData {
   name: string;
   status: "connected" | "disconnected" | "connecting";
   webhook?: string;
-  integration: string;
+  integration?: string;
   connectionState?: string;
   contactsCount?: number;
   chatsCount?: number;
@@ -610,5 +610,4 @@ export default class EvolutionManager {
       throw new Error(`Failed to mark as read: ${error.message}`);
     }
   }
-
 }

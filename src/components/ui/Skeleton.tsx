@@ -121,59 +121,54 @@ export const SkeletonLoadingState: React.FC<SkeletonLoadingStateProps> = ({
 };
 
 interface SkeletonInstanceCardProps {
-  className?: string;
+  message?: string;
 }
 
 export const SkeletonInstanceCard: React.FC<SkeletonInstanceCardProps> = ({
-  className,
+  message,
 }) => {
   return (
-    <div className={clsx("animate-pulse", className)}>
-      {/* Header Skeleton */}
-      <div className="flex items-center justify-between p-4 pb-3">
-        <div className="flex items-center space-x-3">
-          <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-          <Skeleton className="h-5 w-32" />
+    <div className="w-full max-w-sm mx-auto">
+      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+        <div className="flex items-center">
+          <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+          <div className="ml-4 flex-1">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
+            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mt-2 animate-pulse"></div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="w-8 h-8 rounded" />
-          <Skeleton className="w-8 h-8 rounded" />
+        {message && (
+          <div className="mt-4 text-center text-gray-500 dark:text-gray-400">
+            {message}
+          </div>
+        )}
+        <div className="mt-6 flex justify-between">
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 animate-pulse"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 animate-pulse"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 animate-pulse"></div>
         </div>
       </div>
+    </div>
+  );
+};
 
-      {/* Content Skeleton */}
-      <div className="p-4 pt-0 space-y-4">
-        {/* QR Code Area Skeleton */}
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-48 h-48 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-            <div className="text-center flex flex-col items-center justify-center space-y-3">
-              <div className="relative">
-                <div className="w-8 h-8 border-4 border-gray-300 dark:border-gray-600 rounded-full"></div>
-                <div className="absolute top-0 left-0 w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-              <Skeleton className="h-4 w-48" />
+export const SkeletonContactList: React.FC = () => {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-gray-700"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+            <div className="flex-1">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mt-2 animate-pulse"></div>
             </div>
           </div>
-          <Skeleton className="h-4 w-48" />
         </div>
-
-        {/* Stats Skeleton */}
-        <SkeletonStats />
-
-        {/* Details Skeleton */}
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-          <Skeleton className="h-4 w-2/3" />
-        </div>
-
-        {/* Buttons Skeleton */}
-        <div className="flex justify-end items-center gap-2 pt-2">
-          <Skeleton className="h-8 w-20 rounded" />
-          <Skeleton className="h-8 w-24 rounded" />
-        </div>
-      </div>
+      ))}
     </div>
   );
 };
