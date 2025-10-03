@@ -1,6 +1,5 @@
 import { default as React } from 'react';
 import { InstanceSettings } from '../types';
-
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;

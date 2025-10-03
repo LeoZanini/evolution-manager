@@ -1,5 +1,4 @@
 import { default as React, ReactNode } from 'react';
-
 export interface CustomTheme {
     name: string;
     isDark: boolean;
