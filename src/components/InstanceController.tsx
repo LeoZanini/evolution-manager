@@ -52,6 +52,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     deleteInstanceWithState,
     disconnectInstanceWithState,
     refreshInstances,
+    registerWebhookCallback,
   } = useEvolutionManager({ baseUrl, apiKey });
 
   const [instanceState, setInstanceState] = useState<InstanceState>(
@@ -70,6 +71,12 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     console.log(
       `[InstanceController] 🔄 Inicializando para instância: ${instanceName}`
     );
+
+    // Register webhook callback for this instance
+    console.log(
+      `[InstanceController] 📝 Registrando webhook callback para ${instanceName}`
+    );
+    const unregisterWebhook = registerWebhookCallback(instanceName);
 
     const initialState = getInstanceState(instanceName);
     console.log(
@@ -115,8 +122,17 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
         `[InstanceController] 🧹 Limpando subscription para ${instanceName}`
       );
       unsubscribe();
+      if (unregisterWebhook) {
+        unregisterWebhook();
+      }
     };
-  }, [instanceName, subscribe, getInstanceState, refreshInstances]);
+  }, [
+    instanceName,
+    subscribe,
+    getInstanceState,
+    refreshInstances,
+    registerWebhookCallback,
+  ]);
 
   // Auto-conecta quando a instância é criada
   useEffect(() => {

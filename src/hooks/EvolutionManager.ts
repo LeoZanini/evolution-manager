@@ -62,6 +62,17 @@ export interface InstanceSettings {
 export interface WebhookConfig {
   url: string;
   events: string[];
+  enabled?: boolean;
+  webhookByEvents?: boolean;
+  webhookBase64?: boolean;
+}
+
+export interface WebhookResponse {
+  enabled: boolean;
+  url: string;
+  events: string[];
+  webhookByEvents?: boolean;
+  webhookBase64?: boolean;
 }
 
 export interface ApiResponse<T = any> {
@@ -545,11 +556,14 @@ export default class EvolutionManager {
   async setWebhook(
     instanceName: string,
     webhookUrl: string,
-    events: string[] = []
+    events: string[] = ["CONNECTION_UPDATE", "QRCODE_UPDATED"]
   ): Promise<ApiResponse> {
     try {
       const payload: WebhookConfig = {
+        enabled: true,
         url: webhookUrl,
+        webhookByEvents: true,
+        webhookBase64: true,
         events,
       };
       const response: AxiosResponse<ApiResponse> = await this.client.post(
@@ -610,6 +624,24 @@ export default class EvolutionManager {
       return response.data;
     } catch (error: any) {
       throw new Error(`Failed to mark as read: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get webhook configuration for instance
+   */
+  async getWebhook(instanceName: string): Promise<WebhookResponse | null> {
+    try {
+      const response: AxiosResponse<WebhookResponse> = await this.client.get(
+        `/webhook/find/${instanceName}`
+      );
+      return response.data;
+    } catch (error: any) {
+      // Se der erro 404, significa que não tem webhook configurado
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw new Error(`Failed to get webhook: ${error.message}`);
     }
   }
 }

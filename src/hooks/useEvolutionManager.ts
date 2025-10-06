@@ -7,6 +7,27 @@ import EvolutionManager, {
   ApiResponse,
 } from "./EvolutionManager";
 
+// Global webhook callback registry
+const webhookCallbacks = new Map<string, (event: string, data: any) => void>();
+
+// Export global function to handle webhook events - SIMPLE!
+export const handleEvolutionWebhook = (
+  instanceName: string,
+  event: string,
+  data: any
+) => {
+  console.log(`[Evolution Webhook] ${instanceName} - ${event}:`, data);
+
+  const callback = webhookCallbacks.get(instanceName);
+  if (callback) {
+    callback(event, data);
+  } else {
+    console.warn(
+      `[Evolution Webhook] No callback registered for instance: ${instanceName}`
+    );
+  }
+};
+
 export enum InstanceState {
   INITIALIZING = "INITIALIZING", // Estado inicial antes de qualquer ação
   CREATING = "CREATING", // A criação da instância foi solicitada
@@ -25,6 +46,7 @@ export enum InstanceState {
 export interface EvolutionManagerConfig {
   baseUrl: string;
   apiKey: string;
+  webhookUrl?: string; // URL para receber webhooks
 }
 
 export interface UseEvolutionManagerReturn {
@@ -96,6 +118,11 @@ export interface UseEvolutionManagerReturn {
   // Utility methods
   clearError: () => void;
   setLoading: (loading: boolean) => void;
+  // Webhook methods
+  setupWebhook: (instanceName: string, webhookUrl: string) => Promise<void>;
+  checkWebhook: (instanceName: string) => Promise<boolean>;
+  // Register webhook callback for this instance
+  registerWebhookCallback: (instanceName: string) => () => void;
 }
 
 export const useEvolutionManager = (
@@ -259,6 +286,124 @@ export const useEvolutionManager = (
     }
   }, [manager, handleError, getInstanceState, setInstanceState]);
 
+  // Webhook methods
+  const setupWebhook = useCallback(
+    async (instanceName: string, webhookUrl: string) => {
+      if (!manager) throw new Error("Manager not initialized");
+
+      try {
+        console.log(
+          `[useEvolutionManager] 🔗 Configurando webhook para ${instanceName}: ${webhookUrl}`
+        );
+
+        const events = ["CONNECTION_UPDATE", "QRCODE_UPDATED"];
+        await manager.setWebhook(instanceName, webhookUrl, events);
+
+        console.log(
+          `[useEvolutionManager] ✅ Webhook configurado com sucesso para ${instanceName}`
+        );
+      } catch (error: any) {
+        console.error(
+          `[useEvolutionManager] ❌ Erro ao configurar webhook para ${instanceName}:`,
+          error
+        );
+        handleError(error);
+      }
+    },
+    [manager, handleError]
+  );
+
+  const checkWebhook = useCallback(
+    async (instanceName: string): Promise<boolean> => {
+      if (!manager) return false;
+
+      try {
+        console.log(
+          `[useEvolutionManager] 🔍 Verificando webhook para ${instanceName}`
+        );
+
+        const webhook = await manager.getWebhook(instanceName);
+        const hasWebhook = webhook && webhook.enabled && webhook.url;
+
+        console.log(
+          `[useEvolutionManager] ${hasWebhook ? "✅" : "❌"} Webhook ${
+            hasWebhook ? "encontrado" : "não encontrado"
+          } para ${instanceName}`
+        );
+
+        return !!hasWebhook;
+      } catch (error: any) {
+        console.warn(
+          `[useEvolutionManager] ⚠️ Erro ao verificar webhook para ${instanceName}:`,
+          error
+        );
+        return false;
+      }
+    },
+    [manager]
+  );
+
+  // Register webhook callback for this instance
+  const registerWebhookCallback = useCallback(
+    (instanceName: string) => {
+      console.log(
+        `[useEvolutionManager] 📝 Registrando webhook callback para ${instanceName}`
+      );
+
+      const callback = (event: string, data: any) => {
+        console.log(
+          `[useEvolutionManager] 📡 Webhook recebido para ${instanceName}:`,
+          { event, data }
+        );
+
+        switch (event) {
+          case "CONNECTION_UPDATE":
+            if (data?.state === "open" || data?.state === "connected") {
+              console.log(
+                `[useEvolutionManager] 🎉 Conexão estabelecida via webhook!`
+              );
+              setInstanceState(instanceName, InstanceState.CONNECTED);
+            } else if (
+              data?.state === "close" ||
+              data?.state === "disconnected"
+            ) {
+              console.log(
+                `[useEvolutionManager] 📴 Desconexão detectada via webhook!`
+              );
+              setInstanceState(instanceName, InstanceState.DISCONNECTED);
+            }
+            break;
+
+          case "QRCODE_UPDATED":
+            if (data?.qrcode || data?.base64) {
+              const qrCode = data.qrcode || data.base64;
+              console.log(
+                `[useEvolutionManager] 📱 QR Code atualizado via webhook!`
+              );
+              setInstanceState(instanceName, InstanceState.QR_GENERATED, {
+                qrCode,
+              });
+            }
+            break;
+
+          default:
+            console.log(
+              `[useEvolutionManager] 📡 Evento webhook não tratado: ${event}`
+            );
+        }
+      };
+
+      // Register callback globally
+      webhookCallbacks.set(instanceName, callback);
+
+      // Cleanup on unmount
+      return () => {
+        webhookCallbacks.delete(instanceName);
+      };
+    },
+    [setInstanceState]
+  );
+
   const createInstanceWithState = useCallback(
     async (name: string, integration?: string) => {
       if (!manager) throw new Error("Manager not initialized");
@@ -266,19 +411,62 @@ export const useEvolutionManager = (
       try {
         await manager.createInstance(name, integration);
         setInstanceState(name, InstanceState.CREATED);
+
+        // Configurar webhook automaticamente se URL fornecida
+        if (config.webhookUrl) {
+          console.log(
+            `[useEvolutionManager] 🔗 Configurando webhook para nova instância ${name}`
+          );
+          try {
+            await setupWebhook(name, config.webhookUrl);
+          } catch (webhookError) {
+            console.warn(
+              `[useEvolutionManager] ⚠️ Falha ao configurar webhook para ${name}:`,
+              webhookError
+            );
+            // Não falha a criação da instância se o webhook der erro
+          }
+        }
+
         await refreshInstances();
       } catch (err: any) {
         setInstanceState(name, InstanceState.ERROR);
         handleError(err);
       }
     },
-    [manager, setInstanceState, handleError, refreshInstances]
+    [
+      manager,
+      config.webhookUrl,
+      setInstanceState,
+      handleError,
+      refreshInstances,
+      setupWebhook,
+    ]
   );
 
   const connectInstanceWithState = useCallback(
     async (name: string) => {
       if (!manager) throw new Error("Manager not initialized");
       setInstanceState(name, InstanceState.GENERATING_QR);
+
+      // Verificar e configurar webhook se necessário
+      if (config.webhookUrl) {
+        try {
+          const hasWebhook = await checkWebhook(name);
+          if (!hasWebhook) {
+            console.log(
+              `[useEvolutionManager] 🔗 Configurando webhook para instância existente ${name}`
+            );
+            await setupWebhook(name, config.webhookUrl);
+          }
+        } catch (webhookError) {
+          console.warn(
+            `[useEvolutionManager] ⚠️ Falha ao verificar/configurar webhook para ${name}:`,
+            webhookError
+          );
+        }
+      }
+
       try {
         const response = await manager.connectInstance(name);
         console.log(
@@ -329,7 +517,14 @@ export const useEvolutionManager = (
         handleError(err);
       }
     },
-    [manager, setInstanceState, handleError]
+    [
+      manager,
+      config.webhookUrl,
+      setInstanceState,
+      handleError,
+      checkWebhook,
+      setupWebhook,
+    ]
   );
 
   const disconnectInstanceWithState = useCallback(
@@ -698,5 +893,9 @@ export const useEvolutionManager = (
     // Utility methods
     clearError,
     setLoading,
+    // Webhook methods
+    setupWebhook,
+    checkWebhook,
+    registerWebhookCallback,
   };
 };

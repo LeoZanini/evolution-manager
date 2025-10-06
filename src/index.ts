@@ -2,7 +2,10 @@
 export { ThemeProvider } from "./providers/ThemeProvider";
 
 // Hooks
-export { useEvolutionManager } from "./hooks/useEvolutionManager";
+export {
+  useEvolutionManager,
+  handleEvolutionWebhook,
+} from "./hooks/useEvolutionManager";
 export { useTheme } from "./hooks/useTheme";
 
 // Evolution Manager Class
