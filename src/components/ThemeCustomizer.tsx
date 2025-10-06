@@ -72,7 +72,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
           text: contextTheme.colors.text || contextTheme.colors.foreground,
         },
       };
-      console.log("Carregando tema no customizer:", validTheme);
+      // Carregando tema no customizer
       setTheme(validTheme);
     }
   }, [isOpen, contextTheme]);
@@ -91,7 +91,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
   };
 
   const handleApplyTheme = () => {
-    console.log("Aplicando tema:", theme);
+    // Aplicando tema
 
     // Aplica o tema no contexto global
     setCustomTheme({
@@ -115,7 +115,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
     onClose();
   };
   const handleResetTheme = () => {
-    console.log("Resetando para tema padrão");
+    // Resetando para tema padrão
     resetToDefaultTheme();
 
     // Atualiza o estado local com o tema padrão
@@ -129,7 +129,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
   const handleToggleDarkMode = (isDark: boolean) => {
     // Sempre aplica as cores do tema padrão quando muda entre light/dark
     const baseTheme = isDark ? defaultDarkTheme : defaultLightTheme;
-    console.log("Mudando para modo:", isDark ? "dark" : "light", baseTheme);
+    // Mudando para modo:
 
     setTheme({
       ...baseTheme,

@@ -18,6 +18,7 @@ interface InstanceControllerProps {
   apiKey: string;
   instanceName: string;
   showControls?: boolean;
+  refreshMethod?: "polling" | "webhook";
   showStatus?: boolean;
   showSettings?: boolean;
   showThemeToggle?: boolean;
@@ -39,6 +40,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   showThemeToggle = false,
   showThemeCustomizer = false,
   hideDeleteButton = true,
+  refreshMethod = "polling", // "polling" | "webhook"
   className = "w-full md:w-1/2 flex justify-center items-center p-4 h-screen md:h-auto",
   style,
 }) => {
@@ -53,6 +55,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     disconnectInstanceWithState,
     refreshInstances,
     registerWebhookCallback,
+    getInstanceStatus,
   } = useEvolutionManager({ baseUrl, apiKey });
 
   const [instanceState, setInstanceState] = useState<InstanceState>(
@@ -68,59 +71,32 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   );
 
   useEffect(() => {
-    console.log(
-      `[InstanceController] 🔄 Inicializando para instância: ${instanceName}`
-    );
-
-    // Register webhook callback for this instance
-    console.log(
-      `[InstanceController] 📝 Registrando webhook callback para ${instanceName}`
-    );
     const unregisterWebhook = registerWebhookCallback(instanceName);
 
     const initialState = getInstanceState(instanceName);
-    console.log(
-      `[InstanceController] 📊 Estado inicial obtido: ${initialState}`
-    );
 
     if (initialState !== InstanceState.UNKNOWN) {
-      console.log(
-        `[InstanceController] ✅ Definindo estado inicial: ${initialState}`
-      );
       setInstanceState(initialState);
     }
 
     const unsubscribe = subscribe(
       instanceName,
-      ({ state, data }: { state: InstanceState; data?: any }) => {
-        console.log(`[InstanceController] 📢 Recebida atualização de estado:`, {
-          instanceName,
-          newState: state,
-          data,
-          previousState: instanceState,
-        });
-
+      ({ state }: { state: InstanceState; data?: any }) => {
         if (state === InstanceState.UNKNOWN) {
-          console.log(`[InstanceController] ⚠️ Ignorando estado UNKNOWN`);
           return;
         }
 
-        console.log(
-          `[InstanceController] 🔄 Atualizando estado de ${instanceState} para ${state}`
-        );
-        setInstanceState(state);
+        if (state !== instanceState) {
+          setInstanceState(state);
+        }
       }
     );
 
-    console.log(`[InstanceController] 🚀 Executando refreshInstances inicial`);
     refreshInstances().catch((error) => {
       console.error(`[InstanceController] ❌ Erro no refreshInstances:`, error);
     });
 
     return () => {
-      console.log(
-        `[InstanceController] 🧹 Limpando subscription para ${instanceName}`
-      );
       unsubscribe();
       if (unregisterWebhook) {
         unregisterWebhook();
@@ -137,24 +113,76 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   // Auto-conecta quando a instância é criada
   useEffect(() => {
     if (instanceState === InstanceState.CREATED) {
-      console.log(
-        `[InstanceController] 🚀 Instância criada, conectando automaticamente...`
-      );
-      // Aguarda um pouco para garantir que a criação foi processada
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         handleConnect();
       }, 1000);
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
     }
   }, [instanceState]);
 
   // Detecta quando a instância se conecta
   useEffect(() => {
     if (instanceState === InstanceState.CONNECTED) {
-      console.log(
-        `[InstanceController] 🎉 Instância ${instanceName} conectada com sucesso!`
-      );
+      // Instância conectada com sucesso
     }
   }, [instanceState, instanceName]);
+
+  // Polling para verificar status da instância
+  useEffect(() => {
+    if (
+      refreshMethod === "polling" &&
+      instanceState === InstanceState.QR_GENERATED
+    ) {
+      let intervalId: NodeJS.Timeout;
+
+      const checkInstanceStatus = async () => {
+        try {
+          const response = (await getInstanceStatus(instanceName)) as {
+            instance?: { instanceName: string; state: string };
+          };
+          const status = response.instance?.state;
+
+          switch (status) {
+            case "open":
+              setInstanceState(InstanceState.CONNECTED);
+              clearInterval(intervalId);
+              break;
+            case "close":
+              setInstanceState(InstanceState.DISCONNECTED);
+              break;
+            case "connecting":
+              // Mantém QR_GENERATED - não muda estado
+              break;
+            default:
+              setInstanceState(InstanceState.UNKNOWN);
+              break;
+          }
+        } catch (error) {
+          console.error(
+            `[InstanceController] ❌ POLLING: Erro na requisição:`,
+            error
+          );
+          setInstanceState(InstanceState.ERROR);
+          clearInterval(intervalId);
+        }
+      };
+
+      // Primeira verificação imediata
+      checkInstanceStatus();
+
+      // Inicia polling contínuo
+      intervalId = setInterval(() => {
+        checkInstanceStatus();
+      }, 1000);
+
+      return () => {
+        clearInterval(intervalId);
+      };
+    }
+  }, [refreshMethod, instanceName, getInstanceStatus, instanceState]);
 
   const handleConnect = () => {
     connectInstanceWithState(instanceName).catch(console.error);
@@ -251,10 +279,6 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
           qrCode: (() => {
             const qrCode =
               getInstanceData(instanceName).data?.qrCode || undefined;
-            console.log(
-              `[InstanceController] 🔍 QR Code para ${instanceName}:`,
-              qrCode
-            );
             return qrCode;
           })(), // Pega o QR code diretamente da instância
           ...(currentInstance || {}),
@@ -371,8 +395,8 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
             readMessages: false,
             readStatus: false,
           }}
-          onSettingsChange={(s) => console.log("Settings change", s)}
-          onSave={() => console.log("Save settings")}
+          onSettingsChange={() => {}}
+          onSave={() => {}}
         />
       )}
 

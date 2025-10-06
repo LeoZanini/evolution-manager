@@ -32,7 +32,16 @@
     "test:ui": "vitest --ui",
     "test:standalone": "echo '🧪 Execute: npm run dev:standalone' && echo 'Abre http://localhost:5173 para testar o ambiente standalone'",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "version:patch": "npm version patch && npm run build:lib",
+    "version:minor": "npm version minor && npm run build:lib",
+    "version:major": "npm version major && npm run build:lib",
+    "version:publish": "npm run build:lib && npm publish",
+    "pre-release": "npm run type-check && npm run lint && npm run test && npm run build:lib",
+    "release:patch": "npm run pre-release && npm version patch && npm publish",
+    "release:minor": "npm run pre-release && npm version minor && npm publish",
+    "release:major": "npm run pre-release && npm version major && npm publish",
+    "release:safe": "npm run pre-release && echo 'Ready to release! Run: npm version [patch|minor|major] && npm publish'"
   },
   "keywords": [
     "evolution-api",

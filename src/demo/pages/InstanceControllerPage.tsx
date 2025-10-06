@@ -95,6 +95,7 @@ function InstanceControllerPage() {
             <InstanceController
               className="w-full"
               baseUrl={baseUrl}
+              refreshMethod="polling" // ✅ Usando polling para demo
               apiKey={apiKey}
               instanceName={instanceId}
               showSettings={true}

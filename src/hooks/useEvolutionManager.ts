@@ -16,8 +16,6 @@ export const handleEvolutionWebhook = (
   event: string,
   data: any
 ) => {
-  console.log(`[Evolution Webhook] ${instanceName} - ${event}:`, data);
-
   const callback = webhookCallbacks.get(instanceName);
   if (callback) {
     callback(event, data);
@@ -245,10 +243,13 @@ export const useEvolutionManager = (
     setError(null);
     try {
       const instancesData = await manager.listInstances();
+
       setInstances(instancesData);
+
       instancesData.forEach((instance: InstanceData) => {
         const currentState = getInstanceState(instance.name);
-        const apiState = (instance as any).connectionStatus || instance.status;
+        const apiState = instance.connectionStatus || instance.status;
+
         let targetState: InstanceState;
 
         if (apiState === "open" || apiState === "connected") {
@@ -264,6 +265,7 @@ export const useEvolutionManager = (
         } else {
           targetState = InstanceState.UNKNOWN;
         }
+
         // Only update if the state is different and not in a transient state
         const transientStates = [
           InstanceState.DISCONNECTING,
@@ -280,6 +282,7 @@ export const useEvolutionManager = (
         }
       });
     } catch (err: any) {
+      console.error(`[useEvolutionManager] ❌ Erro em refreshInstances:`, err);
       handleError(err);
     } finally {
       setLoading(false);
@@ -292,16 +295,8 @@ export const useEvolutionManager = (
       if (!manager) throw new Error("Manager not initialized");
 
       try {
-        console.log(
-          `[useEvolutionManager] 🔗 Configurando webhook para ${instanceName}: ${webhookUrl}`
-        );
-
         const events = ["CONNECTION_UPDATE", "QRCODE_UPDATED"];
         await manager.setWebhook(instanceName, webhookUrl, events);
-
-        console.log(
-          `[useEvolutionManager] ✅ Webhook configurado com sucesso para ${instanceName}`
-        );
       } catch (error: any) {
         console.error(
           `[useEvolutionManager] ❌ Erro ao configurar webhook para ${instanceName}:`,
@@ -318,18 +313,8 @@ export const useEvolutionManager = (
       if (!manager) return false;
 
       try {
-        console.log(
-          `[useEvolutionManager] 🔍 Verificando webhook para ${instanceName}`
-        );
-
         const webhook = await manager.getWebhook(instanceName);
         const hasWebhook = webhook && webhook.enabled && webhook.url;
-
-        console.log(
-          `[useEvolutionManager] ${hasWebhook ? "✅" : "❌"} Webhook ${
-            hasWebhook ? "encontrado" : "não encontrado"
-          } para ${instanceName}`
-        );
 
         return !!hasWebhook;
       } catch (error: any) {
@@ -346,30 +331,15 @@ export const useEvolutionManager = (
   // Register webhook callback for this instance
   const registerWebhookCallback = useCallback(
     (instanceName: string) => {
-      console.log(
-        `[useEvolutionManager] 📝 Registrando webhook callback para ${instanceName}`
-      );
-
       const callback = (event: string, data: any) => {
-        console.log(
-          `[useEvolutionManager] 📡 Webhook recebido para ${instanceName}:`,
-          { event, data }
-        );
-
         switch (event) {
           case "CONNECTION_UPDATE":
             if (data?.state === "open" || data?.state === "connected") {
-              console.log(
-                `[useEvolutionManager] 🎉 Conexão estabelecida via webhook!`
-              );
               setInstanceState(instanceName, InstanceState.CONNECTED);
             } else if (
               data?.state === "close" ||
               data?.state === "disconnected"
             ) {
-              console.log(
-                `[useEvolutionManager] 📴 Desconexão detectada via webhook!`
-              );
               setInstanceState(instanceName, InstanceState.DISCONNECTED);
             }
             break;
@@ -377,9 +347,6 @@ export const useEvolutionManager = (
           case "QRCODE_UPDATED":
             if (data?.qrcode || data?.base64) {
               const qrCode = data.qrcode || data.base64;
-              console.log(
-                `[useEvolutionManager] 📱 QR Code atualizado via webhook!`
-              );
               setInstanceState(instanceName, InstanceState.QR_GENERATED, {
                 qrCode,
               });
@@ -387,9 +354,7 @@ export const useEvolutionManager = (
             break;
 
           default:
-            console.log(
-              `[useEvolutionManager] 📡 Evento webhook não tratado: ${event}`
-            );
+          // Evento webhook não tratado
         }
       };
 
@@ -414,9 +379,6 @@ export const useEvolutionManager = (
 
         // Configurar webhook automaticamente se URL fornecida
         if (config.webhookUrl) {
-          console.log(
-            `[useEvolutionManager] 🔗 Configurando webhook para nova instância ${name}`
-          );
           try {
             await setupWebhook(name, config.webhookUrl);
           } catch (webhookError) {
@@ -454,9 +416,6 @@ export const useEvolutionManager = (
         try {
           const hasWebhook = await checkWebhook(name);
           if (!hasWebhook) {
-            console.log(
-              `[useEvolutionManager] 🔗 Configurando webhook para instância existente ${name}`
-            );
             await setupWebhook(name, config.webhookUrl);
           }
         } catch (webhookError) {
@@ -469,40 +428,21 @@ export const useEvolutionManager = (
 
       try {
         const response = await manager.connectInstance(name);
-        console.log(
-          `[useEvolutionManager] 🔍 Resposta da API para ${name}:`,
-          response
-        );
 
         // Verifica se tem o base64 ou code para gerar QR
         if ((response as any).base64) {
           const qrCode = (response as any).base64;
-          console.log(
-            `[useEvolutionManager] ✅ QR Code (base64) encontrado para ${name}:`,
-            qrCode.substring(0, 50) + "..."
-          );
+
           setInstanceState(name, InstanceState.QR_GENERATED, { qrCode });
         } else if ((response as any).code) {
           const qrCode = (response as any).code;
-          console.log(
-            `[useEvolutionManager] ✅ QR Code (text) encontrado para ${name}:`,
-            qrCode
-          );
           setInstanceState(name, InstanceState.QR_GENERATED, { qrCode });
         } else if (response.data?.code) {
           const qrCode = response.data.code;
-          console.log(
-            `[useEvolutionManager] ✅ QR Code encontrado para ${name}:`,
-            qrCode
-          );
           setInstanceState(name, InstanceState.QR_GENERATED, { qrCode });
         } else if (response.data?.qrcode?.base64) {
           // Fallback para o formato antigo
           const qrCode = response.data.qrcode.base64;
-          console.log(
-            `[useEvolutionManager] ✅ QR Code (formato antigo) encontrado para ${name}:`,
-            qrCode
-          );
           setInstanceState(name, InstanceState.QR_GENERATED, { qrCode });
         } else {
           // Se não veio QR code, continua gerando ou tenta novamente
@@ -644,11 +584,15 @@ export const useEvolutionManager = (
 
   const getInstanceStatus = useCallback(
     async (name: string): Promise<ApiResponse> => {
-      if (!manager) throw new Error("Manager not initialized");
+      if (!manager) {
+        throw new Error("Manager not initialized");
+      }
 
       try {
         setError(null);
+
         const result = await manager.getInstanceStatus(name);
+
         return result;
       } catch (err: any) {
         handleError(err);
@@ -657,6 +601,7 @@ export const useEvolutionManager = (
     },
     [manager, handleError]
   );
+
   const fetchSingleInstance = useCallback(
     async (name: string): Promise<InstanceData | null> => {
       if (!manager) throw new Error("Manager not initialized");
