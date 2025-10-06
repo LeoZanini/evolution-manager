@@ -7,16 +7,10 @@ import EvolutionManager, {
   ApiResponse,
 } from "./EvolutionManager";
 
-// Polling configuration constants
-const POLLING_INTERVAL_MS = 2000;
-const MAX_POLLING_INTERVAL_MS = 10000;
-const POLLING_BACKOFF_MULTIPLIER = 2;
-
 export enum InstanceState {
   INITIALIZING = "INITIALIZING", // Estado inicial antes de qualquer ação
   CREATING = "CREATING", // A criação da instância foi solicitada
   CREATED = "CREATED", // A instância foi criada, mas está desconectada
-  CONNECTING = "CONNECTING", // A conexão foi solicitada, aguardando QR code ou conexão
   GENERATING_QR = "GENERATING_QR", // Gerando o QR code
   QR_GENERATED = "QR_GENERATED", // QR code gerado e pronto para ser escaneado
   CONNECTED = "CONNECTED", // A instância está conectada e operacional
@@ -49,6 +43,10 @@ export interface UseEvolutionManagerReturn {
   getInstanceStatus: (name: string) => Promise<ApiResponse>;
   fetchSingleInstance: (name: string) => Promise<InstanceData | null>;
   // State Management
+  getInstanceData: (instanceName: string) => {
+    state: InstanceState;
+    data?: any;
+  };
   getInstanceState: (instanceName: string) => InstanceState;
   subscribe: (
     instanceName: string,
@@ -117,8 +115,6 @@ export const useEvolutionManager = (
   const subscribers = useRef<
     Map<string, ((payload: { state: InstanceState; data?: any }) => void)[]>
   >(new Map());
-  const pollingIntervals = useRef<Map<string, NodeJS.Timeout>>(new Map());
-  const pollingCurrentIntervals = useRef<Map<string, number>>(new Map()); // Track current interval for each instance
 
   const notifySubscribers = (
     instanceName: string,
@@ -126,48 +122,32 @@ export const useEvolutionManager = (
     data?: any
   ) => {
     const instanceSubscribers = subscribers.current.get(instanceName);
-    console.log(
-      `[notifySubscribers] 📢 Notificando ${
-        instanceSubscribers?.length || 0
-      } subscribers para ${instanceName}: ${state}`
-    );
     if (instanceSubscribers) {
-      instanceSubscribers.forEach((callback, index) => {
-        console.log(
-          `[notifySubscribers] 📞 Chamando callback ${index} para ${instanceName}`
-        );
+      instanceSubscribers.forEach((callback) => {
         callback({ state, data });
       });
-    } else {
-      console.log(
-        `[notifySubscribers] ⚠️ Nenhum subscriber encontrado para ${instanceName}`
-      );
     }
   };
 
+  const getInstanceData = useCallback(
+    (instanceName: string): { state: InstanceState; data?: any } => {
+      const state =
+        instanceStates.current.get(instanceName) || InstanceState.UNKNOWN;
+      const data = instanceData.current.get(instanceName);
+      return { state, data };
+    },
+    []
+  );
+
   const setInstanceState = useCallback(
     (instanceName: string, state: InstanceState, data?: any) => {
-      console.log(
-        `[setInstanceState] 🎯 ${instanceName}: ${state}`,
-        data || ""
-      );
-      const previousState = instanceStates.current.get(instanceName);
       instanceStates.current.set(instanceName, state);
-
       if (data) {
         const currentData = instanceData.current.get(instanceName) || {};
         instanceData.current.set(instanceName, { ...currentData, ...data });
       }
 
-      console.log(
-        `[setInstanceState] 📢 Notificando ${
-          subscribers.current.get(instanceName)?.length || 0
-        } subscribers para ${instanceName}`
-      );
       notifySubscribers(instanceName, state, data);
-      console.log(
-        `[setInstanceState] ✅ Estado atualizado: ${instanceName} ${previousState} → ${state}`
-      );
     },
     []
   );
@@ -184,136 +164,22 @@ export const useEvolutionManager = (
       instanceName: string,
       callback: (payload: { state: InstanceState; data?: any }) => void
     ) => {
-      console.log(`[subscribe] 📝 Adicionando subscriber para ${instanceName}`);
       const instanceSubscribers = subscribers.current.get(instanceName) || [];
       instanceSubscribers.push(callback);
       subscribers.current.set(instanceName, instanceSubscribers);
-      console.log(
-        `[subscribe] ✅ Total de subscribers para ${instanceName}: ${instanceSubscribers.length}`
-      );
-
       // Retorna uma função de unsubscribe
       return () => {
-        console.log(`[subscribe] 🧹 Removendo subscriber para ${instanceName}`);
         const currentSubscribers = subscribers.current.get(instanceName) || [];
         const newSubscribers = currentSubscribers.filter(
           (cb) => cb !== callback
         );
         subscribers.current.set(instanceName, newSubscribers);
-        console.log(
-          `[subscribe] ✅ Subscribers restantes para ${instanceName}: ${newSubscribers.length}`
-        );
       };
     },
     []
   );
 
   // Polling logic
-  const stopPolling = useCallback((instanceName: string) => {
-    if (pollingIntervals.current.has(instanceName)) {
-      console.log(`[Polling] Stopping for ${instanceName}`);
-      clearTimeout(pollingIntervals.current.get(instanceName)); // Use clearTimeout instead of clearInterval
-      pollingIntervals.current.delete(instanceName);
-      pollingCurrentIntervals.current.delete(instanceName); // Clean up backoff state
-    }
-  }, []);
-
-  const startPolling = useCallback(
-    (instanceName: string) => {
-      if (pollingIntervals.current.has(instanceName)) return; // Already polling
-
-      console.log(`[Polling] Starting for ${instanceName}`);
-
-      // Initialize polling interval for this instance
-      pollingCurrentIntervals.current.set(instanceName, POLLING_INTERVAL_MS);
-
-      const pollInstance = async () => {
-        if (!manager) return;
-
-        try {
-          const response = await manager.getInstanceStatus(instanceName);
-          const apiState = response.data?.instance?.state; // e.g., "open", "close", "connecting"
-          const currentState = getInstanceState(instanceName);
-
-          let nextState: InstanceState | null = null;
-
-          if (apiState === "open" && currentState !== InstanceState.CONNECTED) {
-            nextState = InstanceState.CONNECTED;
-          } else if (
-            apiState === "close" &&
-            currentState !== InstanceState.DISCONNECTED &&
-            currentState !== InstanceState.CREATED
-          ) {
-            nextState = InstanceState.DISCONNECTED;
-          } else if (
-            apiState === "connecting" &&
-            currentState !== InstanceState.CONNECTING
-          ) {
-            nextState = InstanceState.CONNECTING;
-          }
-
-          if (nextState) {
-            setInstanceState(instanceName, nextState);
-          }
-
-          // Reset interval to base value on successful poll
-          pollingCurrentIntervals.current.set(
-            instanceName,
-            POLLING_INTERVAL_MS
-          );
-
-          // Stop polling if the instance reaches a stable state
-          if (
-            nextState === InstanceState.CONNECTED ||
-            nextState === InstanceState.DISCONNECTED
-          ) {
-            stopPolling(instanceName);
-            return;
-          }
-
-          // Schedule next poll with current interval
-          const currentInterval =
-            pollingCurrentIntervals.current.get(instanceName) ||
-            POLLING_INTERVAL_MS;
-          const timeoutId = setTimeout(pollInstance, currentInterval);
-          pollingIntervals.current.set(instanceName, timeoutId);
-        } catch (error) {
-          console.error(`[Polling] Error for ${instanceName}:`, error);
-
-          // Implement exponential backoff on error
-          const currentInterval =
-            pollingCurrentIntervals.current.get(instanceName) ||
-            POLLING_INTERVAL_MS;
-          const newInterval = Math.min(
-            currentInterval * POLLING_BACKOFF_MULTIPLIER,
-            MAX_POLLING_INTERVAL_MS
-          );
-          pollingCurrentIntervals.current.set(instanceName, newInterval);
-
-          console.log(
-            `[Polling] Backing off to ${newInterval}ms for ${instanceName}`
-          );
-
-          // Don't stop polling on error, just increase interval
-          const timeoutId = setTimeout(pollInstance, newInterval);
-          pollingIntervals.current.set(instanceName, timeoutId);
-        }
-      };
-
-      // Start first poll immediately
-      pollInstance();
-    },
-    [manager, getInstanceState, setInstanceState, stopPolling]
-  );
-
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      pollingIntervals.current.forEach((_, instanceName) => {
-        stopPolling(instanceName);
-      });
-    };
-  }, [stopPolling]);
 
   // Initialize manager
   useEffect(() => {
@@ -344,35 +210,18 @@ export const useEvolutionManager = (
 
   // Data fetching methods
   const refreshInstances = useCallback(async (): Promise<void> => {
-    console.log(`[useEvolutionManager] 🔄 Iniciando refreshInstances`);
     if (!manager) {
-      console.log(
-        `[useEvolutionManager] ⚠️ Manager não inicializado, abortando refreshInstances`
-      );
       return;
     }
 
     setLoading(true);
     setError(null);
     try {
-      console.log(`[useEvolutionManager] 📡 Fazendo chamada listInstances`);
       const instancesData = await manager.listInstances();
-      console.log(
-        `[useEvolutionManager] ✅ Recebidas ${instancesData.length} instâncias:`,
-        instancesData
-      );
-
       setInstances(instancesData);
-
-      // Update states based on fetched data
       instancesData.forEach((instance: InstanceData) => {
         const currentState = getInstanceState(instance.name);
-        // ✅ CORREÇÃO: Usar connectionStatus ao invés de status
         const apiState = (instance as any).connectionStatus || instance.status;
-        console.log(
-          `[useEvolutionManager] 🔍 Processando instância ${instance.name}: API=${apiState}, Estado Atual=${currentState}`
-        );
-
         let targetState: InstanceState;
 
         if (apiState === "open" || apiState === "connected") {
@@ -384,18 +233,12 @@ export const useEvolutionManager = (
               ? InstanceState.CREATED
               : InstanceState.DISCONNECTED;
         } else if (apiState === "connecting") {
-          targetState = InstanceState.CONNECTING;
+          targetState = InstanceState.QR_GENERATED;
         } else {
           targetState = InstanceState.UNKNOWN;
         }
-
-        console.log(
-          `[useEvolutionManager] 🎯 Estado alvo calculado para ${instance.name}: ${targetState}`
-        );
-
         // Only update if the state is different and not in a transient state
         const transientStates = [
-          InstanceState.CONNECTING,
           InstanceState.DISCONNECTING,
           InstanceState.DELETING,
           InstanceState.GENERATING_QR,
@@ -405,23 +248,14 @@ export const useEvolutionManager = (
           currentState !== targetState &&
           !transientStates.includes(currentState);
 
-        console.log(
-          `[useEvolutionManager] 🤔 Deve atualizar estado para ${instance.name}? ${shouldUpdate} (atual: ${currentState} → alvo: ${targetState})`
-        );
-
         if (shouldUpdate) {
-          console.log(
-            `[useEvolutionManager] 🔄 Atualizando estado de ${instance.name}: ${currentState} → ${targetState}`
-          );
           setInstanceState(instance.name, targetState);
         }
       });
     } catch (err: any) {
-      console.error(`[useEvolutionManager] ❌ Erro no refreshInstances:`, err);
       handleError(err);
     } finally {
       setLoading(false);
-      console.log(`[useEvolutionManager] ✅ refreshInstances finalizado`);
     }
   }, [manager, handleError, getInstanceState, setInstanceState]);
 
@@ -447,19 +281,55 @@ export const useEvolutionManager = (
       setInstanceState(name, InstanceState.GENERATING_QR);
       try {
         const response = await manager.connectInstance(name);
-        if (response.data?.qrcode?.base64) {
+        console.log(
+          `[useEvolutionManager] 🔍 Resposta da API para ${name}:`,
+          response
+        );
+
+        // Verifica se tem o base64 ou code para gerar QR
+        if ((response as any).base64) {
+          const qrCode = (response as any).base64;
+          console.log(
+            `[useEvolutionManager] ✅ QR Code (base64) encontrado para ${name}:`,
+            qrCode.substring(0, 50) + "..."
+          );
+          setInstanceState(name, InstanceState.QR_GENERATED, { qrCode });
+        } else if ((response as any).code) {
+          const qrCode = (response as any).code;
+          console.log(
+            `[useEvolutionManager] ✅ QR Code (text) encontrado para ${name}:`,
+            qrCode
+          );
+          setInstanceState(name, InstanceState.QR_GENERATED, { qrCode });
+        } else if (response.data?.code) {
+          const qrCode = response.data.code;
+          console.log(
+            `[useEvolutionManager] ✅ QR Code encontrado para ${name}:`,
+            qrCode
+          );
+          setInstanceState(name, InstanceState.QR_GENERATED, { qrCode });
+        } else if (response.data?.qrcode?.base64) {
+          // Fallback para o formato antigo
           const qrCode = response.data.qrcode.base64;
+          console.log(
+            `[useEvolutionManager] ✅ QR Code (formato antigo) encontrado para ${name}:`,
+            qrCode
+          );
           setInstanceState(name, InstanceState.QR_GENERATED, { qrCode });
         } else {
-          setInstanceState(name, InstanceState.CONNECTING);
-        }
-        startPolling(name); // Start polling after connection attempt
+          // Se não veio QR code, continua gerando ou tenta novamente
+          console.warn(
+            `[useEvolutionManager] ❌ QR Code não retornado para ${name}, resposta completa:`,
+            response
+          );
+          // Mantém em GENERATING_QR e continua polling
+        } // Start polling after connection attempt
       } catch (err: any) {
         setInstanceState(name, InstanceState.ERROR);
         handleError(err);
       }
     },
-    [manager, setInstanceState, handleError, startPolling]
+    [manager, setInstanceState, handleError]
   );
 
   const disconnectInstanceWithState = useCallback(
@@ -469,14 +339,13 @@ export const useEvolutionManager = (
       try {
         await manager.disconnectInstance(name);
         setInstanceState(name, InstanceState.DISCONNECTED);
-        stopPolling(name); // Stop polling on disconnect
         await refreshInstances();
       } catch (err: any) {
         setInstanceState(name, InstanceState.ERROR);
         handleError(err);
       }
     },
-    [manager, setInstanceState, handleError, stopPolling, refreshInstances]
+    [manager, setInstanceState, handleError, refreshInstances]
   );
 
   const deleteInstanceWithState = useCallback(
@@ -486,7 +355,6 @@ export const useEvolutionManager = (
       try {
         await manager.deleteInstance(name);
         setInstanceState(name, InstanceState.DELETED);
-        stopPolling(name); // Stop polling on delete
         instanceStates.current.delete(name);
         instanceData.current.delete(name); // Also clear instance data
         subscribers.current.delete(name);
@@ -496,7 +364,7 @@ export const useEvolutionManager = (
         handleError(err);
       }
     },
-    [manager, setInstanceState, handleError, stopPolling, refreshInstances]
+    [manager, setInstanceState, handleError, refreshInstances]
   );
 
   // Instance methods
@@ -809,6 +677,7 @@ export const useEvolutionManager = (
     getInstanceStatus,
     fetchSingleInstance,
     // State Management
+    getInstanceData,
     getInstanceState,
     subscribe,
     // Instance methods with state

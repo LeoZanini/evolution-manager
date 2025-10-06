@@ -7,8 +7,7 @@ import { ThemeCustomizer } from "./ThemeCustomizer";
 import { ThemeSwitch } from "./ui/ThemeSwitch";
 import { Plus, Settings, Palette } from "lucide-react";
 import clsx from "clsx";
-import { QRCodeModal } from "./QRCodeModal";
-import { InstanceCard } from "./InstanceCard"; // Importar o InstanceCard
+import { InstanceCard } from "./InstanceCard";
 import {
   InstanceState,
   useEvolutionManager,
@@ -23,7 +22,7 @@ interface InstanceControllerProps {
   showSettings?: boolean;
   showThemeToggle?: boolean;
   showThemeCustomizer?: boolean;
-  hideDeleteButton?: boolean; // ✅ Nova prop
+  hideDeleteButton?: boolean;
   onInstanceCreated?: (name: string) => void;
   onInstanceDeleted?: (name: string) => void;
   onInstanceConnected?: (name: string) => void;
@@ -39,16 +38,17 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   showSettings = true,
   showThemeToggle = false,
   showThemeCustomizer = false,
-  hideDeleteButton = true, // ✅ Default = true (escondido)
+  hideDeleteButton = true,
   className = "w-full md:w-1/2 flex justify-center items-center p-4 h-screen md:h-auto",
   style,
 }) => {
   const {
-    instances, // ✅ Adicionando instances
+    instances,
     subscribe,
     getInstanceState,
+    getInstanceData,
     connectInstanceWithState,
-    createInstance,
+    createInstanceWithState,
     deleteInstanceWithState,
     disconnectInstanceWithState,
     refreshInstances,
@@ -57,14 +57,11 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   const [instanceState, setInstanceState] = useState<InstanceState>(
     InstanceState.UNKNOWN
   );
-  const [qrCode, setQrCode] = useState<string | null>(null);
-  const [isQrCodeModalOpen, setQrCodeModalOpen] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showThemeCustomizerModal, setShowThemeCustomizerModal] =
     useState(false);
 
-  // ✅ Pegar dados reais da instância da API
   const currentInstance = instances.find(
     (instance) => instance.name === instanceName
   );
@@ -74,7 +71,6 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
       `[InstanceController] 🔄 Inicializando para instância: ${instanceName}`
     );
 
-    // Hydrate the initial state, but don't trigger any actions yet.
     const initialState = getInstanceState(instanceName);
     console.log(
       `[InstanceController] 📊 Estado inicial obtido: ${initialState}`
@@ -106,20 +102,9 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
           `[InstanceController] 🔄 Atualizando estado de ${instanceState} para ${state}`
         );
         setInstanceState(state);
-
-        if (state === InstanceState.QR_GENERATED && data?.qrCode) {
-          console.log(
-            `[InstanceController] 📱 QR Code recebido, abrindo modal`
-          );
-          setQrCode(data.qrCode);
-          setQrCodeModalOpen(true);
-        } else {
-          setQrCodeModalOpen(false);
-        }
       }
     );
 
-    // Initial load to get the real status from the API
     console.log(`[InstanceController] 🚀 Executando refreshInstances inicial`);
     refreshInstances().catch((error) => {
       console.error(`[InstanceController] ❌ Erro no refreshInstances:`, error);
@@ -132,6 +117,28 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
       unsubscribe();
     };
   }, [instanceName, subscribe, getInstanceState, refreshInstances]);
+
+  // Auto-conecta quando a instância é criada
+  useEffect(() => {
+    if (instanceState === InstanceState.CREATED) {
+      console.log(
+        `[InstanceController] 🚀 Instância criada, conectando automaticamente...`
+      );
+      // Aguarda um pouco para garantir que a criação foi processada
+      setTimeout(() => {
+        handleConnect();
+      }, 1000);
+    }
+  }, [instanceState]);
+
+  // Detecta quando a instância se conecta
+  useEffect(() => {
+    if (instanceState === InstanceState.CONNECTED) {
+      console.log(
+        `[InstanceController] 🎉 Instância ${instanceName} conectada com sucesso!`
+      );
+    }
+  }, [instanceState, instanceName]);
 
   const handleConnect = () => {
     connectInstanceWithState(instanceName).catch(console.error);
@@ -146,7 +153,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   };
 
   const handleCreate = async (newInstanceName: string) => {
-    await createInstance(newInstanceName);
+    await createInstanceWithState(newInstanceName);
     setShowCreateForm(false);
   };
 
@@ -157,25 +164,12 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     [InstanceState.CREATING]: (
       <SkeletonInstanceCard message="Criando instância..." />
     ),
-    [InstanceState.CONNECTING]: (
-      <InstanceCard
-        instance={{
-          name: instanceName,
-          status: "connecting",
-          ...(currentInstance || {}), // ✅ Incluir dados reais da API
-        }}
-        onDisconnect={handleDisconnect}
-        onDelete={handleDelete}
-        onSettings={() => setShowSettingsModal(true)}
-        hideDeleteButton={hideDeleteButton}
-      />
-    ),
     [InstanceState.DISCONNECTING]: (
       <InstanceCard
         instance={{
           name: instanceName,
           status: "disconnected",
-          ...(currentInstance || {}), // ✅ Incluir dados reais da API
+          ...(currentInstance || {}),
         }}
         onConnect={handleConnect}
         onDelete={handleDelete}
@@ -191,7 +185,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
         instance={{
           name: instanceName,
           status: "connecting",
-          isGeneratingQR: true, // ✅ Flag para mostrar animação QR
+          isGeneratingQR: true,
           ...(currentInstance || {}),
         }}
         onDisconnect={handleDisconnect}
@@ -205,9 +199,9 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
         <p className="mb-4" style={{ color: "var(--theme-success, #10b981)" }}>
           Instância '{instanceName}' criada com sucesso!
         </p>
-        <Button onClick={handleConnect}>
-          <Plus className="mr-2" /> Conectar
-        </Button>
+        <p className="text-sm" style={{ color: "var(--theme-foreground)" }}>
+          Conectando automaticamente...
+        </p>
       </div>
     ),
     [InstanceState.DELETED]: (
@@ -225,7 +219,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
         instance={{
           name: instanceName,
           status: "connected",
-          ...(currentInstance || {}), // ✅ Incluir dados reais da API
+          ...(currentInstance || {}),
         }}
         onDisconnect={handleDisconnect}
         onDelete={handleDelete}
@@ -234,35 +228,33 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
       />
     ),
     [InstanceState.QR_GENERATED]: (
-      <>
-        <InstanceCard
-          instance={{
-            name: instanceName,
-            status: "disconnected",
-            qrCode: qrCode || undefined,
-            ...(currentInstance || {}), // ✅ Incluir dados reais da API
-          }}
-          onConnect={handleConnect}
-          onDelete={handleDelete}
-          onSettings={() => setShowSettingsModal(true)}
-          hideDeleteButton={hideDeleteButton}
-        />
-        {qrCode && (
-          <QRCodeModal
-            isOpen={isQrCodeModalOpen}
-            onClose={() => setQrCodeModalOpen(false)}
-            qrCode={qrCode}
-            instanceName={instanceName}
-          />
-        )}
-      </>
+      <InstanceCard
+        instance={{
+          name: instanceName,
+          status: "disconnected",
+          qrCode: (() => {
+            const qrCode =
+              getInstanceData(instanceName).data?.qrCode || undefined;
+            console.log(
+              `[InstanceController] 🔍 QR Code para ${instanceName}:`,
+              qrCode
+            );
+            return qrCode;
+          })(), // Pega o QR code diretamente da instância
+          ...(currentInstance || {}),
+        }}
+        onConnect={handleConnect}
+        onDelete={handleDelete}
+        onSettings={() => setShowSettingsModal(true)}
+        hideDeleteButton={hideDeleteButton}
+      />
     ),
     [InstanceState.DISCONNECTED]: (
       <InstanceCard
         instance={{
           name: instanceName,
           status: "disconnected",
-          ...(currentInstance || {}), // ✅ Incluir dados reais da API
+          ...(currentInstance || {}),
         }}
         onConnect={handleConnect}
         onDelete={handleDelete}
@@ -301,7 +293,6 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
 
   return (
     <div className={clsx("relative", className)} style={style}>
-      {/* ✅ Barra de configurações no topo como card pequeno */}
       {(showSettings || showThemeCustomizer || showThemeToggle) && (
         <div className="flex justify-center mb-4">
           <div
@@ -341,7 +332,6 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
         </div>
       )}
 
-      {/* Conteúdo principal */}
       {renderContent()}
 
       {showCreateForm && (
