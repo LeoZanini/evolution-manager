@@ -4,7 +4,27 @@
 
 /* Custom CSS variables for themes */
 :root {
-  /* Default theme colors */
+  /* Light Theme */
+  --theme-background-light: #ffffff;
+  --theme-foreground-light: #1f2937;
+  --theme-border-light: #e5e7eb;
+  --theme-secondary-light: #6b7280;
+  --theme-primary-light: #3b82f6;
+  --theme-success-light: #10b981;
+  --theme-warning-light: #f59e0b;
+  --theme-danger-light: #ef4444;
+
+  /* Dark Theme */
+  --theme-background-dark: #1f2937;
+  --theme-foreground-dark: #f9fafb;
+  --theme-border-dark: #374151;
+  --theme-secondary-dark: #9ca3af;
+  --theme-primary-dark: #60a5fa;
+  --theme-success-dark: #34d399;
+  --theme-warning-dark: #fbbf24;
+  --theme-danger-dark: #f87171;
+
+  /* Legacy - Manter para compatibilidade */
   --color-primary-50: #eff6ff;
   --color-primary-100: #dbeafe;
   --color-primary-500: #3b82f6;

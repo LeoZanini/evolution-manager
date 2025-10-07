@@ -34,7 +34,6 @@ export type {
   Message,
   Contact,
   EvolutionManagerConfig,
-  // Evolution Manager API types
   InstanceData,
   MessageData,
   ContactData,
