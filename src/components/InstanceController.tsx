@@ -12,6 +12,7 @@ import {
   InstanceState,
   useEvolutionManager,
 } from "../hooks/useEvolutionManager";
+import { useTheme } from "../hooks/useTheme";
 
 interface InstanceControllerProps {
   baseUrl: string;
@@ -58,6 +59,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     getInstanceStatus,
   } = useEvolutionManager({ baseUrl, apiKey });
 
+  const { theme, toggleTheme } = useTheme();
   const [instanceState, setInstanceState] = useState<InstanceState>(
     InstanceState.UNKNOWN
   );
@@ -362,10 +364,8 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
             )}
             {showThemeToggle && (
               <ThemeSwitch
-                checked={false}
-                onCheckedChange={() => {
-                  /* no-op for now */
-                }}
+                checked={theme.isDark}
+                onCheckedChange={toggleTheme}
               />
             )}
           </div>

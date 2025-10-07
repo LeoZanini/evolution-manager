@@ -245,9 +245,17 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
           )}
         </div>
 
-        {/* Action Buttons - ✅ Reordenados e alinhados à direita */}
         <div className="flex justify-end gap-2">
-          {/* ✅ 1. Botão Conectar/Desconectar PRIMEIRO */}
+          <Button
+            onClick={() => onSettings?.(instance.name)}
+            size="sm"
+            variant="ghost"
+            className="flex items-center space-x-1"
+          >
+            <Settings className="w-4 h-4" />
+            <span>Config</span>
+          </Button>
+
           {instance.status === "connected" ? (
             <Button
               onClick={() => onDisconnect?.(instance.name)}
@@ -272,15 +280,6 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
           )}
 
           {/* ✅ 2. Botão Config */}
-          <Button
-            onClick={() => onSettings?.(instance.name)}
-            size="sm"
-            variant="ghost"
-            className="flex items-center space-x-1"
-          >
-            <Settings className="w-4 h-4" />
-            <span>Config</span>
-          </Button>
 
           {/* ✅ 3. Botão Excluir (apenas se não estiver escondido) */}
           {!hideDeleteButton && (

@@ -79,8 +79,6 @@ export function InstanceManager({
     clearError,
   } = useEvolutionManager({ baseUrl, apiKey });
 
-  // Auto-refresh removido: só atualiza se usuário clicar no botão refresh
-
   const handleCreateInstance = async (instanceName: string) => {
     try {
       await createInstance(instanceName, "WHATSAPP-BAILEYS");
