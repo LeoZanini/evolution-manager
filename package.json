@@ -1,6 +1,6 @@
 {
   "name": "evolution-manager-library",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "description": "Modern React component library for Evolution API with theming support",
   "type": "module",
   "main": "dist/index.js",
