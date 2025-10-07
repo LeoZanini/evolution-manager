@@ -23,7 +23,7 @@ interface InstanceCardProps {
   onDelete?: (instanceName: string) => void;
   onSettings?: (instanceName: string) => void;
   hideDeleteButton?: boolean;
-  theme?: "light" | "dark" | "system";
+  theme?: "light" | "dark";
 }
 
 export const InstanceCard: React.FC<InstanceCardProps> = ({
@@ -37,17 +37,19 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
 }) => {
   const isDark = theme === "dark";
   const getStatusInfo = () => {
-    const suffix = isDark ? "-dark" : "-light";
+    // Cores fixas para status - não dependem do theme
+    const statusColors = {
+      primary: "#3b82f6", // azul
+      success: "#10b981", // verde
+      warning: "#f59e0b", // amarelo
+      danger: "#ef4444", // vermelho
+    };
 
     if (instance.isGeneratingQR) {
       return {
         text: "Gerando QR Code...",
-        badgeColor: `var(--theme-primary${suffix}, ${
-          isDark ? "#60a5fa" : "#3b82f6"
-        })`,
-        textColor: `var(--theme-primary${suffix}, ${
-          isDark ? "#60a5fa" : "#3b82f6"
-        })`,
+        badgeColor: statusColors.primary,
+        textColor: statusColors.primary,
         showLoader: true,
       };
     }
@@ -55,12 +57,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
     if (instance.qrCode) {
       return {
         text: "Escaneie com seu celular",
-        badgeColor: `var(--theme-warning${suffix}, ${
-          isDark ? "#fbbf24" : "#f59e0b"
-        })`,
-        textColor: `var(--theme-warning${suffix}, ${
-          isDark ? "#fbbf24" : "#f59e0b"
-        })`,
+        badgeColor: statusColors.warning,
+        textColor: statusColors.warning,
         showQR: true,
       };
     }
@@ -68,12 +66,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
     if (instance.isConnecting) {
       return {
         text: "Conectando...",
-        badgeColor: `var(--theme-warning${suffix}, ${
-          isDark ? "#fbbf24" : "#f59e0b"
-        })`,
-        textColor: `var(--theme-warning${suffix}, ${
-          isDark ? "#fbbf24" : "#f59e0b"
-        })`,
+        badgeColor: statusColors.warning,
+        textColor: statusColors.warning,
         showLoader: true,
       };
     }
@@ -82,34 +76,22 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
       case "connected":
         return {
           text: "Conectado",
-          badgeColor: `var(--theme-success${suffix}, ${
-            isDark ? "#34d399" : "#10b981"
-          })`,
-          textColor: `var(--theme-success${suffix}, ${
-            isDark ? "#34d399" : "#10b981"
-          })`,
+          badgeColor: statusColors.success,
+          textColor: statusColors.success,
           showStats: true,
         };
       case "connecting":
         return {
           text: "Conectando",
-          badgeColor: `var(--theme-warning${suffix}, ${
-            isDark ? "#fbbf24" : "#f59e0b"
-          })`,
-          textColor: `var(--theme-warning${suffix}, ${
-            isDark ? "#fbbf24" : "#f59e0b"
-          })`,
+          badgeColor: statusColors.warning,
+          textColor: statusColors.warning,
           showLoader: true,
         };
       default:
         return {
           text: "Desconectado",
-          badgeColor: `var(--theme-danger${suffix}, ${
-            isDark ? "#f87171" : "#ef4444"
-          })`,
-          textColor: `var(--theme-danger${suffix}, ${
-            isDark ? "#f87171" : "#ef4444"
-          })`,
+          badgeColor: statusColors.danger,
+          textColor: statusColors.danger,
         };
     }
   };
@@ -239,9 +221,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                 <Users
                   className="w-4 h-4"
                   style={{
-                    color: `var(--theme-primary${
-                      isDark ? "-dark" : "-light"
-                    }, ${isDark ? "#60a5fa" : "#3b82f6"})`,
+                    color: "#3b82f6", // azul fixo
                   }}
                 />
                 <span
@@ -281,9 +261,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                 <MessageCircle
                   className="w-4 h-4"
                   style={{
-                    color: `var(--theme-success${
-                      isDark ? "-dark" : "-light"
-                    }, ${isDark ? "#34d399" : "#10b981"})`,
+                    color: "#10b981", // verde fixo
                   }}
                 />
                 <span

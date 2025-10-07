@@ -17,7 +17,7 @@ interface InstanceControllerProps {
   baseUrl: string;
   apiKey: string;
   instanceName: string;
-  theme?: "light" | "dark" | "system";
+  theme?: "light" | "dark";
   showControls?: boolean;
   refreshMethod?: "polling" | "webhook";
   showStatus?: boolean;
