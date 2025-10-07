@@ -18,6 +18,7 @@ interface InstanceControllerProps {
   baseUrl: string;
   apiKey: string;
   instanceName: string;
+  theme?: "light" | "dark" | "system";
   showControls?: boolean;
   refreshMethod?: "polling" | "webhook";
   showStatus?: boolean;
@@ -37,6 +38,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   baseUrl,
   apiKey,
   instanceName,
+  theme,
   showSettings = true,
   showThemeToggle = false,
   showThemeCustomizer = false,
@@ -59,7 +61,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     getInstanceStatus,
   } = useEvolutionManager({ baseUrl, apiKey });
 
-  const { theme, toggleTheme } = useTheme();
+  const { theme: currentTheme, toggleTheme, setCustomTheme } = useTheme();
   const [instanceState, setInstanceState] = useState<InstanceState>(
     InstanceState.UNKNOWN
   );
@@ -67,6 +69,22 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showThemeCustomizerModal, setShowThemeCustomizerModal] =
     useState(false);
+
+  // Sincroniza tema externo com tema interno
+  useEffect(() => {
+    if (theme && theme !== "system") {
+      const isDark = theme === "dark";
+      if (currentTheme.isDark !== isDark) {
+        // Só atualiza se for diferente para evitar loop
+        const newTheme = {
+          ...currentTheme,
+          isDark,
+          name: theme,
+        };
+        setCustomTheme(newTheme);
+      }
+    }
+  }, [theme, currentTheme.isDark, setCustomTheme]);
 
   const currentInstance = instances.find(
     (instance) => instance.name === instanceName
@@ -364,7 +382,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
             )}
             {showThemeToggle && (
               <ThemeSwitch
-                checked={theme.isDark}
+                checked={theme === "dark" || currentTheme.isDark}
                 onCheckedChange={toggleTheme}
               />
             )}

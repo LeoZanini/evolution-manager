@@ -21,18 +21,23 @@ export const Modal: React.FC<ModalProps> = ({
       <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
           onClick={onClose}
         />
 
         {/* Modal */}
         <div
           className={clsx(
-            "relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg",
+            "relative transform overflow-hidden rounded-lg text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border",
             className
           )}
+          style={{
+            backgroundColor: "var(--theme-background)",
+            borderColor: "var(--theme-border)",
+            color: "var(--theme-foreground)",
+          }}
         >
-          <div className="p-6">{children}</div>
+          {children}
         </div>
       </div>
     </div>
