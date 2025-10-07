@@ -14,6 +14,7 @@ export { default as EvolutionManager } from "./hooks/EvolutionManager";
 // High-Level Components (Canivete Suíço)
 export { InstanceManager } from "./components/InstanceManager";
 export { InstanceController } from "./components/InstanceController";
+export { InstanceControllerWithoutProvider } from "./components/InstanceControllerWithoutProvider";
 
 // Base Components
 export { InstanceCard } from "./components/InstanceCard";

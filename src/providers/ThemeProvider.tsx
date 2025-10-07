@@ -91,10 +91,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     setIsDark(currentMode === "dark");
     setIsCustomTheme(currentIsCustom);
 
-    console.log("Inicializando tema:", {
-      mode: currentMode,
-      isCustom: currentIsCustom,
-    });
+    // Inicializando tema
 
     // Aplica o tema correto
     const theme = getThemeForMode(currentMode, currentIsCustom);
@@ -111,7 +108,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       if (savedCustomTheme) {
         try {
           const parsedTheme = JSON.parse(savedCustomTheme) as CustomTheme;
-          console.log(`Carregando tema personalizado ${mode}:`, parsedTheme);
           return parsedTheme;
         } catch (error) {
           console.error(`Erro ao carregar tema personalizado ${mode}:`, error);
@@ -121,7 +117,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
     // Retorna tema padrão
     const defaultTheme = mode === "dark" ? darkTheme : lightTheme;
-    console.log(`Usando tema padrão ${mode}:`, defaultTheme);
     return defaultTheme;
   };
 
@@ -157,20 +152,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Salva a preferência de modo
     localStorage.setItem("evolution-theme-mode", newMode);
 
-    console.log("Toggle theme:", {
-      fromMode: isDark ? "dark" : "light",
-      toMode: newMode,
-      isCustom: isCustomTheme,
-    });
-
     // Aplica o tema do novo modo (personalizado ou padrão)
     const theme = getThemeForMode(newMode, isCustomTheme);
     applyThemeToDom(theme);
   };
 
   const handleSetCustomTheme = (theme: CustomTheme) => {
-    console.log("Definindo novo tema personalizado:", theme);
-
     // Salva como tema personalizado para o modo atual
     const mode = theme.isDark ? "dark" : "light";
     localStorage.setItem(
@@ -188,8 +175,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   };
 
   const resetToDefaultTheme = () => {
-    console.log("Resetando para tema padrão");
-
     // Remove flag de tema personalizado
     localStorage.setItem("evolution-theme-is-custom", "false");
     setIsCustomTheme(false);
