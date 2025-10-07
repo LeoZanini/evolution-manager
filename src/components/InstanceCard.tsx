@@ -104,13 +104,9 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
       style={{
         backgroundColor: `var(--theme-background${
           isDark ? "-dark" : "-light"
-        }, ${isDark ? "#1f2937" : "#ffffff"})`,
-        borderColor: `var(--theme-border${isDark ? "-dark" : "-light"}, ${
-          isDark ? "#374151" : "#e5e7eb"
         })`,
-        color: `var(--theme-foreground${isDark ? "-dark" : "-light"}, ${
-          isDark ? "#f9fafb" : "#1f2937"
-        })`,
+        borderColor: `var(--theme-border${isDark ? "-dark" : "-light"})`,
+        color: `var(--theme-foreground${isDark ? "-dark" : "-light"})`,
       }}
     >
       {/* Header */}
@@ -123,9 +119,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
           <h3
             className="text-lg font-medium"
             style={{
-              color: `var(--theme-foreground${isDark ? "-dark" : "-light"}, ${
-                isDark ? "#f9fafb" : "#1f2937"
-              })`,
+              color: `var(--theme-foreground${isDark ? "-dark" : "-light"})`,
             }}
           >
             {instance.name}
@@ -149,10 +143,10 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
               style={{
                 backgroundColor: `var(--theme-background${
                   isDark ? "-dark" : "-light"
-                }, ${isDark ? "#1f2937" : "#ffffff"})`,
+                })`,
                 borderColor: `var(--theme-border${
                   isDark ? "-dark" : "-light"
-                }, ${isDark ? "#374151" : "#e5e7eb"})`,
+                })`,
               }}
             >
               <img
@@ -164,9 +158,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
             <p
               className="text-sm text-center"
               style={{
-                color: `var(--theme-secondary${isDark ? "-dark" : "-light"}, ${
-                  isDark ? "#9ca3af" : "#6b7280"
-                })`,
+                color: `var(--theme-secondary${isDark ? "-dark" : "-light"})`,
               }}
             >
               Abra o WhatsApp no seu celular e escaneie este código
@@ -182,10 +174,10 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
               style={{
                 backgroundColor: `var(--theme-background${
                   isDark ? "-dark" : "-light"
-                }, ${isDark ? "#1f2937" : "#ffffff"})`,
+                })`,
                 borderColor: `var(--theme-border${
                   isDark ? "-dark" : "-light"
-                }, ${isDark ? "#374151" : "#e5e7eb"})`,
+                })`,
               }}
             >
               <Loading size="md" />
@@ -193,9 +185,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
             <p
               className="text-sm text-center"
               style={{
-                color: `var(--theme-secondary${isDark ? "-dark" : "-light"}, ${
-                  isDark ? "#9ca3af" : "#6b7280"
-                })`,
+                color: `var(--theme-secondary${isDark ? "-dark" : "-light"})`,
               }}
             >
               {statusInfo.text}
@@ -211,10 +201,10 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
               style={{
                 backgroundColor: `var(--theme-background${
                   isDark ? "-dark" : "-light"
-                }, ${isDark ? "#1f2937" : "#ffffff"})`,
+                })`,
                 borderColor: `var(--theme-border${
                   isDark ? "-dark" : "-light"
-                }, ${isDark ? "#374151" : "#e5e7eb"})`,
+                })`,
               }}
             >
               <div className="flex items-center space-x-2">
@@ -229,7 +219,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                   style={{
                     color: `var(--theme-secondary${
                       isDark ? "-dark" : "-light"
-                    }, ${isDark ? "#9ca3af" : "#6b7280"})`,
+                    })`,
                   }}
                 >
                   Contatos
@@ -240,7 +230,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                 style={{
                   color: `var(--theme-foreground${
                     isDark ? "-dark" : "-light"
-                  }, ${isDark ? "#ffffff" : "#000000"})`,
+                  })`,
                 }}
               >
                 {instance.contactsCount || 0}
@@ -251,10 +241,10 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
               style={{
                 backgroundColor: `var(--theme-background${
                   isDark ? "-dark" : "-light"
-                }, ${isDark ? "#1f2937" : "#ffffff"})`,
+                })`,
                 borderColor: `var(--theme-border${
                   isDark ? "-dark" : "-light"
-                }, ${isDark ? "#374151" : "#e5e7eb"})`,
+                })`,
               }}
             >
               <div className="flex items-center space-x-2">
@@ -269,7 +259,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                   style={{
                     color: `var(--theme-secondary${
                       isDark ? "-dark" : "-light"
-                    }, ${isDark ? "#9ca3af" : "#6b7280"})`,
+                    })`,
                   }}
                 >
                   Chats
@@ -280,7 +270,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                 style={{
                   color: `var(--theme-foreground${
                     isDark ? "-dark" : "-light"
-                  }, ${isDark ? "#ffffff" : "#000000"})`,
+                  })`,
                 }}
               >
                 {instance.chatsCount || 0}
@@ -293,18 +283,14 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
         <div
           className="space-y-2 text-sm mb-4"
           style={{
-            color: `var(--theme-secondary${isDark ? "-dark" : "-light"}, ${
-              isDark ? "#9ca3af" : "#6b7280"
-            })`,
+            color: `var(--theme-secondary${isDark ? "-dark" : "-light"})`,
           }}
         >
           <div>
             <span className="font-medium">Integração:</span>{" "}
             <span
               style={{
-                color: `var(--theme-foreground${isDark ? "-dark" : "-light"}, ${
-                  isDark ? "#ffffff" : "#000000"
-                })`,
+                color: `var(--theme-foreground${isDark ? "-dark" : "-light"})`,
               }}
             >
               {instance.integration || "WHATSAPP-BAILEYS"}
@@ -317,7 +303,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                 style={{
                   color: `var(--theme-foreground${
                     isDark ? "-dark" : "-light"
-                  }, ${isDark ? "#ffffff" : "#000000"})`,
+                  })`,
                 }}
               >
                 {instance.connectionState}
