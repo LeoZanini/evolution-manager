@@ -1,12 +1,8 @@
-// Providers
-export { ThemeProvider } from "./providers/ThemeProvider";
-
 // Hooks
 export {
   useEvolutionManager,
   handleEvolutionWebhook,
 } from "./hooks/useEvolutionManager";
-export { useTheme } from "./hooks/useTheme";
 
 // Evolution Manager Class
 export { default as EvolutionManager } from "./hooks/EvolutionManager";
@@ -14,7 +10,6 @@ export { default as EvolutionManager } from "./hooks/EvolutionManager";
 // High-Level Components (Canivete Suíço)
 export { InstanceManager } from "./components/InstanceManager";
 export { InstanceController } from "./components/InstanceController";
-export { InstanceControllerWithoutProvider } from "./components/InstanceControllerWithoutProvider";
 
 // Base Components
 export { InstanceCard } from "./components/InstanceCard";

@@ -22,7 +22,8 @@ interface InstanceCardProps {
   onDisconnect?: (instanceName: string) => void;
   onDelete?: (instanceName: string) => void;
   onSettings?: (instanceName: string) => void;
-  hideDeleteButton?: boolean; // ✅ Nova prop para esconder botão Excluir
+  hideDeleteButton?: boolean;
+  theme?: "light" | "dark" | "system";
 }
 
 export const InstanceCard: React.FC<InstanceCardProps> = ({
@@ -31,14 +32,18 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
   onDisconnect,
   onDelete,
   onSettings,
-  hideDeleteButton = true, // ✅ Default = true (escondido)
+  hideDeleteButton = true,
+  theme = "light",
 }) => {
+  const isDark = theme === "dark";
   const getStatusInfo = () => {
+    const suffix = isDark ? "-dark" : "-light";
+
     if (instance.isGeneratingQR) {
       return {
         text: "Gerando QR Code...",
-        badgeColor: "var(--theme-primary, #3b82f6)",
-        textColor: "var(--theme-primary, #3b82f6)",
+        badgeColor: `var(--theme-primary${suffix})`,
+        textColor: `var(--theme-primary${suffix})`,
         showLoader: true,
       };
     }
@@ -46,8 +51,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
     if (instance.qrCode) {
       return {
         text: "Escaneie com seu celular",
-        badgeColor: "var(--theme-warning, #f59e0b)",
-        textColor: "var(--theme-warning, #f59e0b)",
+        badgeColor: `var(--theme-warning${suffix})`,
+        textColor: `var(--theme-warning${suffix})`,
         showQR: true,
       };
     }
@@ -55,8 +60,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
     if (instance.isConnecting) {
       return {
         text: "Conectando...",
-        badgeColor: "var(--theme-warning, #f97316)",
-        textColor: "var(--theme-warning, #f97316)",
+        badgeColor: `var(--theme-warning${suffix})`,
+        textColor: `var(--theme-warning${suffix})`,
         showLoader: true,
       };
     }
@@ -65,22 +70,22 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
       case "connected":
         return {
           text: "Conectado",
-          badgeColor: "var(--theme-success, #10b981)",
-          textColor: "var(--theme-success, #10b981)",
+          badgeColor: `var(--theme-success${suffix})`,
+          textColor: `var(--theme-success${suffix})`,
           showStats: true,
         };
       case "connecting":
         return {
           text: "Conectando",
-          badgeColor: "var(--theme-warning, #f97316)",
-          textColor: "var(--theme-warning, #f97316)",
+          badgeColor: `var(--theme-warning${suffix})`,
+          textColor: `var(--theme-warning${suffix})`,
           showLoader: true,
         };
       default:
         return {
           text: "Desconectado",
-          badgeColor: "var(--theme-danger, #ef4444)",
-          textColor: "var(--theme-danger, #ef4444)",
+          badgeColor: `var(--theme-danger${suffix})`,
+          textColor: `var(--theme-danger${suffix})`,
         };
     }
   };
@@ -89,12 +94,14 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
 
   return (
     <Card
-      style={{
-        backgroundColor: "var(--theme-background)",
-        borderColor: "var(--theme-border)",
-        color: "var(--theme-foreground)",
-      }}
       className="transition-all duration-200"
+      style={{
+        backgroundColor: `var(--theme-background${
+          isDark ? "-dark" : "-light"
+        })`,
+        borderColor: `var(--theme-border${isDark ? "-dark" : "-light"})`,
+        color: `var(--theme-foreground${isDark ? "-dark" : "-light"})`,
+      }}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-3">
@@ -105,7 +112,9 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
           />
           <h3
             className="text-lg font-medium"
-            style={{ color: "var(--theme-foreground)" }}
+            style={{
+              color: `var(--theme-foreground${isDark ? "-dark" : "-light"})`,
+            }}
           >
             {instance.name}
           </h3>
@@ -126,8 +135,12 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
             <div
               className="p-4 rounded-lg shadow-sm border"
               style={{
-                backgroundColor: "var(--theme-background)",
-                borderColor: "var(--theme-border)",
+                backgroundColor: `var(--theme-background${
+                  isDark ? "-dark" : "-light"
+                })`,
+                borderColor: `var(--theme-border${
+                  isDark ? "-dark" : "-light"
+                })`,
               }}
             >
               <img
@@ -138,7 +151,9 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
             </div>
             <p
               className="text-sm text-center"
-              style={{ color: "var(--theme-secondary)" }}
+              style={{
+                color: `var(--theme-secondary${isDark ? "-dark" : "-light"})`,
+              }}
             >
               Abra o WhatsApp no seu celular e escaneie este código
             </p>
@@ -151,15 +166,21 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
             <div
               className="p-8 rounded-lg shadow-sm border flex items-center justify-center"
               style={{
-                backgroundColor: "var(--theme-background)",
-                borderColor: "var(--theme-border)",
+                backgroundColor: `var(--theme-background${
+                  isDark ? "-dark" : "-light"
+                })`,
+                borderColor: `var(--theme-border${
+                  isDark ? "-dark" : "-light"
+                })`,
               }}
             >
               <Loading size="md" />
             </div>
             <p
               className="text-sm text-center"
-              style={{ color: "var(--theme-secondary)" }}
+              style={{
+                color: `var(--theme-secondary${isDark ? "-dark" : "-light"})`,
+              }}
             >
               {statusInfo.text}
             </p>
@@ -172,25 +193,39 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
             <div
               className="p-3 rounded-lg border"
               style={{
-                backgroundColor: "var(--theme-background)",
-                borderColor: "var(--theme-border)",
+                backgroundColor: `var(--theme-background${
+                  isDark ? "-dark" : "-light"
+                })`,
+                borderColor: `var(--theme-border${
+                  isDark ? "-dark" : "-light"
+                })`,
               }}
             >
               <div className="flex items-center space-x-2">
                 <Users
                   className="w-4 h-4"
-                  style={{ color: "var(--theme-primary)" }}
+                  style={{
+                    color: `var(--theme-primary${isDark ? "-dark" : "-light"})`,
+                  }}
                 />
                 <span
                   className="text-sm"
-                  style={{ color: "var(--theme-secondary)" }}
+                  style={{
+                    color: `var(--theme-secondary${
+                      isDark ? "-dark" : "-light"
+                    })`,
+                  }}
                 >
                   Contatos
                 </span>
               </div>
               <p
                 className="text-lg font-semibold mt-1"
-                style={{ color: "var(--theme-foreground)" }}
+                style={{
+                  color: `var(--theme-foreground${
+                    isDark ? "-dark" : "-light"
+                  })`,
+                }}
               >
                 {instance.contactsCount || 0}
               </p>
@@ -198,25 +233,39 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
             <div
               className="p-3 rounded-lg border"
               style={{
-                backgroundColor: "var(--theme-background)",
-                borderColor: "var(--theme-border)",
+                backgroundColor: `var(--theme-background${
+                  isDark ? "-dark" : "-light"
+                })`,
+                borderColor: `var(--theme-border${
+                  isDark ? "-dark" : "-light"
+                })`,
               }}
             >
               <div className="flex items-center space-x-2">
                 <MessageCircle
                   className="w-4 h-4"
-                  style={{ color: "var(--theme-success)" }}
+                  style={{
+                    color: `var(--theme-success${isDark ? "-dark" : "-light"})`,
+                  }}
                 />
                 <span
                   className="text-sm"
-                  style={{ color: "var(--theme-secondary)" }}
+                  style={{
+                    color: `var(--theme-secondary${
+                      isDark ? "-dark" : "-light"
+                    })`,
+                  }}
                 >
                   Chats
                 </span>
               </div>
               <p
                 className="text-lg font-semibold mt-1"
-                style={{ color: "var(--theme-foreground)" }}
+                style={{
+                  color: `var(--theme-foreground${
+                    isDark ? "-dark" : "-light"
+                  })`,
+                }}
               >
                 {instance.chatsCount || 0}
               </p>
@@ -227,18 +276,30 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
         {/* Instance Details */}
         <div
           className="space-y-2 text-sm mb-4"
-          style={{ color: "var(--theme-secondary)" }}
+          style={{
+            color: `var(--theme-secondary${isDark ? "-dark" : "-light"})`,
+          }}
         >
           <div>
             <span className="font-medium">Integração:</span>{" "}
-            <span style={{ color: "var(--theme-foreground)" }}>
+            <span
+              style={{
+                color: `var(--theme-foreground${isDark ? "-dark" : "-light"})`,
+              }}
+            >
               {instance.integration || "WHATSAPP-BAILEYS"}
             </span>
           </div>
           {instance.connectionState && (
             <div>
               <span className="font-medium">Estado:</span>{" "}
-              <span style={{ color: "var(--theme-foreground)" }}>
+              <span
+                style={{
+                  color: `var(--theme-foreground${
+                    isDark ? "-dark" : "-light"
+                  })`,
+                }}
+              >
                 {instance.connectionState}
               </span>
             </div>

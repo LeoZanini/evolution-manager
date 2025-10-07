@@ -12,7 +12,6 @@ import {
   InstanceState,
   useEvolutionManager,
 } from "../hooks/useEvolutionManager";
-import { useTheme } from "../hooks/useTheme";
 
 interface InstanceControllerProps {
   baseUrl: string;
@@ -30,6 +29,7 @@ interface InstanceControllerProps {
   onInstanceDeleted?: (name: string) => void;
   onInstanceConnected?: (name: string) => void;
   onInstanceDisconnected?: (name: string) => void;
+  onThemeChange?: (theme: "light" | "dark") => void;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -38,12 +38,13 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   baseUrl,
   apiKey,
   instanceName,
-  theme,
+  theme = "light",
   showSettings = true,
   showThemeToggle = false,
   showThemeCustomizer = false,
   hideDeleteButton = true,
-  refreshMethod = "polling", // "polling" | "webhook"
+  refreshMethod = "polling",
+  onThemeChange,
   className = "w-full md:w-1/2 flex justify-center items-center p-4 h-screen md:h-auto",
   style,
 }) => {
@@ -61,7 +62,6 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     getInstanceStatus,
   } = useEvolutionManager({ baseUrl, apiKey });
 
-  const { theme: currentTheme, toggleTheme, setCustomTheme } = useTheme();
   const [instanceState, setInstanceState] = useState<InstanceState>(
     InstanceState.UNKNOWN
   );
@@ -70,21 +70,10 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   const [showThemeCustomizerModal, setShowThemeCustomizerModal] =
     useState(false);
 
-  // Sincroniza tema externo com tema interno
-  useEffect(() => {
-    if (theme && theme !== "system") {
-      const isDark = theme === "dark";
-      if (currentTheme.isDark !== isDark) {
-        // Só atualiza se for diferente para evitar loop
-        const newTheme = {
-          ...currentTheme,
-          isDark,
-          name: theme,
-        };
-        setCustomTheme(newTheme);
-      }
-    }
-  }, [theme, currentTheme.isDark, setCustomTheme]);
+  const toggleTheme = () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
+    onThemeChange?.(newTheme);
+  };
 
   const currentInstance = instances.find(
     (instance) => instance.name === instanceName
@@ -239,6 +228,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
         onDelete={handleDelete}
         onSettings={() => setShowSettingsModal(true)}
         hideDeleteButton={hideDeleteButton}
+        theme={theme}
       />
     ),
     [InstanceState.DELETING]: (
@@ -256,24 +246,22 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
         onDelete={handleDelete}
         onSettings={() => setShowSettingsModal(true)}
         hideDeleteButton={hideDeleteButton}
+        theme={theme}
       />
     ),
     [InstanceState.CREATED]: (
       <div className="text-center">
-        <p className="mb-4" style={{ color: "var(--theme-success, #10b981)" }}>
+        <p className="mb-4 text-green-600 dark:text-green-400">
           Instância '{instanceName}' criada com sucesso!
         </p>
-        <p className="text-sm" style={{ color: "var(--theme-foreground)" }}>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
           Conectando automaticamente...
         </p>
       </div>
     ),
     [InstanceState.DELETED]: (
       <div className="text-center">
-        <p
-          className="mb-4"
-          style={{ color: "var(--theme-secondary, #6b7280)" }}
-        >
+        <p className="mb-4 text-gray-500 dark:text-gray-400">
           Instância '{instanceName}' foi deletada.
         </p>
       </div>
@@ -289,6 +277,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
         onDelete={handleDelete}
         onSettings={() => setShowSettingsModal(true)}
         hideDeleteButton={hideDeleteButton}
+        theme={theme}
       />
     ),
     [InstanceState.QR_GENERATED]: (
@@ -300,13 +289,14 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
             const qrCode =
               getInstanceData(instanceName).data?.qrCode || undefined;
             return qrCode;
-          })(), // Pega o QR code diretamente da instância
+          })(),
           ...(currentInstance || {}),
         }}
         onConnect={handleConnect}
         onDelete={handleDelete}
         onSettings={() => setShowSettingsModal(true)}
         hideDeleteButton={hideDeleteButton}
+        theme={theme}
       />
     ),
     [InstanceState.DISCONNECTED]: (
@@ -320,11 +310,12 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
         onDelete={handleDelete}
         onSettings={() => setShowSettingsModal(true)}
         hideDeleteButton={hideDeleteButton}
+        theme={theme}
       />
     ),
     [InstanceState.ERROR]: (
       <div className="text-center">
-        <p className="mb-4" style={{ color: "var(--theme-danger, #ef4444)" }}>
+        <p className="mb-4 text-red-600 dark:text-red-400">
           Ocorreu um erro com a instância '{instanceName}'.
         </p>
         <Button onClick={handleConnect}>
@@ -334,7 +325,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     ),
     [InstanceState.UNKNOWN]: (
       <div className="text-center">
-        <p className="mb-4" style={{ color: "var(--theme-foreground)" }}>
+        <p className="mb-4 text-gray-900 dark:text-gray-100">
           Instância '{instanceName}' não encontrada.
         </p>
         <Button onClick={() => setShowCreateForm(true)}>
@@ -355,13 +346,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     <div className={clsx("relative", className)} style={style}>
       {(showSettings || showThemeCustomizer || showThemeToggle) && (
         <div className="flex justify-center mb-4">
-          <div
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border"
-            style={{
-              backgroundColor: "var(--theme-background)",
-              borderColor: "var(--theme-border)",
-            }}
-          >
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             {showSettings && (
               <Button
                 variant="ghost"
@@ -382,7 +367,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
             )}
             {showThemeToggle && (
               <ThemeSwitch
-                checked={theme === "dark" || currentTheme.isDark}
+                checked={theme === "dark"}
                 onCheckedChange={toggleTheme}
               />
             )}
