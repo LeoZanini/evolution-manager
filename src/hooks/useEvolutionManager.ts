@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import EvolutionManager, {
   InstanceData,
+  InstanceSettings,
   MessageData,
   ContactData,
   ChatData,
@@ -62,6 +63,12 @@ export interface UseEvolutionManagerReturn {
   disconnectInstance: (name: string) => Promise<ApiResponse>;
   getInstanceStatus: (name: string) => Promise<ApiResponse>;
   fetchSingleInstance: (name: string) => Promise<InstanceData | null>;
+  // Settings methods
+  getInstanceSettings: (instanceName: string) => Promise<InstanceSettings>;
+  setInstanceSettings: (
+    instanceName: string,
+    settings: InstanceSettings
+  ) => Promise<void>;
   // State Management
   getInstanceData: (instanceName: string) => {
     state: InstanceState;
@@ -794,6 +801,27 @@ export const useEvolutionManager = (
     [manager, handleError]
   );
 
+  // Settings methods
+  const getInstanceSettings = useCallback(
+    async (instanceName: string): Promise<InstanceSettings> => {
+      if (!manager) {
+        throw new Error("Evolution Manager não inicializado");
+      }
+      return await manager.getInstanceSettings(instanceName);
+    },
+    [manager]
+  );
+
+  const setInstanceSettings = useCallback(
+    async (instanceName: string, settings: InstanceSettings): Promise<void> => {
+      if (!manager) {
+        throw new Error("Evolution Manager não inicializado");
+      }
+      await manager.setInstanceSettings(instanceName, settings);
+    },
+    [manager]
+  );
+
   // Auto-refresh instances when manager is ready
   useEffect(() => {
     if (manager) {
@@ -816,6 +844,9 @@ export const useEvolutionManager = (
     disconnectInstance,
     getInstanceStatus,
     fetchSingleInstance,
+    // Settings methods
+    getInstanceSettings,
+    setInstanceSettings,
     // State Management
     getInstanceData,
     getInstanceState,

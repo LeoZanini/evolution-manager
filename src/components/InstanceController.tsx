@@ -8,6 +8,7 @@ import { ThemeSwitch } from "./ui/ThemeSwitch";
 import { Plus, Settings, Palette } from "lucide-react";
 import clsx from "clsx";
 import { InstanceCard } from "./InstanceCard";
+import { InstanceSettings } from "../types";
 import {
   InstanceState,
   useEvolutionManager,
@@ -60,6 +61,8 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
     refreshInstances,
     registerWebhookCallback,
     getInstanceStatus,
+    getInstanceSettings,
+    setInstanceSettings,
   } = useEvolutionManager({ baseUrl, apiKey });
 
   const [instanceState, setInstanceState] = useState<InstanceState>(
@@ -69,10 +72,41 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showThemeCustomizerModal, setShowThemeCustomizerModal] =
     useState(false);
+  const [instanceSettings, setInstanceSettingsState] =
+    useState<InstanceSettings>({
+      rejectCall: false,
+      msgCall: "",
+      groupsIgnore: false,
+      alwaysOnline: false,
+      readMessages: false,
+      readStatus: false,
+    });
 
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
     onThemeChange?.(newTheme);
+  };
+
+  // Load settings when modal opens
+  const handleOpenSettings = async () => {
+    setShowSettingsModal(true);
+    try {
+      const settings = await getInstanceSettings(instanceName);
+      setInstanceSettingsState(settings);
+    } catch (error) {
+      console.error("Erro ao carregar configurações:", error);
+      // Usar configurações padrão em caso de erro
+    }
+  };
+
+  // Save settings
+  const handleSaveSettings = async () => {
+    try {
+      await setInstanceSettings(instanceName, instanceSettings);
+      setShowSettingsModal(false);
+    } catch (error) {
+      console.error("Erro ao salvar configurações:", error);
+    }
   };
 
   const currentInstance = instances.find(
@@ -226,7 +260,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
         }}
         onConnect={handleConnect}
         onDelete={handleDelete}
-        onSettings={() => setShowSettingsModal(true)}
+        onSettings={() => handleOpenSettings()}
         hideDeleteButton={hideDeleteButton}
         theme={theme}
       />
@@ -382,6 +416,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
           isOpen={true}
           onClose={() => setShowCreateForm(false)}
           onSubmit={handleCreate}
+          theme={theme}
         />
       )}
 
@@ -390,16 +425,10 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
           isOpen={showSettingsModal}
           onClose={() => setShowSettingsModal(false)}
           instanceName={instanceName}
-          settings={{
-            rejectCall: false,
-            msgCall: "",
-            groupsIgnore: false,
-            alwaysOnline: false,
-            readMessages: false,
-            readStatus: false,
-          }}
-          onSettingsChange={() => {}}
-          onSave={() => {}}
+          settings={instanceSettings}
+          onSettingsChange={setInstanceSettingsState}
+          onSave={handleSaveSettings}
+          theme={theme}
         />
       )}
 

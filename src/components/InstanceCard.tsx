@@ -286,6 +286,20 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
             color: `var(--theme-secondary${isDark ? "-dark" : "-light"})`,
           }}
         >
+          {instance.ownerJid && (
+            <div>
+              <span className="font-medium">Telefone:</span>{" "}
+              <span
+                style={{
+                  color: `var(--theme-foreground${
+                    isDark ? "-dark" : "-light"
+                  })`,
+                }}
+              >
+                {instance.ownerJid.replace("@s.whatsapp.net", "")}
+              </span>
+            </div>
+          )}
           <div>
             <span className="font-medium">Integração:</span>{" "}
             <span

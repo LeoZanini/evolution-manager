@@ -11,6 +11,7 @@ interface SettingsModalProps {
   settings: InstanceSettings;
   onSettingsChange: (settings: InstanceSettings) => void;
   onSave: () => void;
+  theme?: "light" | "dark";
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -20,6 +21,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   onSettingsChange,
   onSave,
+  theme = "light",
 }) => {
   const handleSettingChange = (
     key: keyof InstanceSettings,
@@ -38,7 +40,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} theme={theme}>
       <div className="p-6">
         <h3 className="text-lg font-semibold text-text mb-4">
           Configurações: {instanceName}

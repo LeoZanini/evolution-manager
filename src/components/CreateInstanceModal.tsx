@@ -9,6 +9,7 @@ interface CreateInstanceModalProps {
   onClose: () => void;
   onSubmit: (name: string) => Promise<void>;
   defaultName?: string;
+  theme?: "light" | "dark";
 }
 
 export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
@@ -16,6 +17,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
   onClose,
   onSubmit,
   defaultName = "",
+  theme = "light",
 }) => {
   const [instanceName, setInstanceName] = useState(defaultName);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,6 +108,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      theme={theme}
       className="border-2 dark:border-gray-900 border-gray-300"
     >
       <div className="">

@@ -6,6 +6,7 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
+  theme?: "light" | "dark";
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -13,8 +14,11 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   children,
   className,
+  theme = "light",
 }) => {
   if (!isOpen) return null;
+
+  const isDark = theme === "dark";
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -32,9 +36,11 @@ export const Modal: React.FC<ModalProps> = ({
             className
           )}
           style={{
-            backgroundColor: "var(--theme-background)",
-            borderColor: "var(--theme-border)",
-            color: "var(--theme-foreground)",
+            backgroundColor: `var(--theme-background${
+              isDark ? "-dark" : "-light"
+            })`,
+            borderColor: `var(--theme-border${isDark ? "-dark" : "-light"})`,
+            color: `var(--theme-foreground${isDark ? "-dark" : "-light"})`,
           }}
         >
           {children}
