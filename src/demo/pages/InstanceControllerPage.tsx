@@ -106,6 +106,7 @@ function InstanceControllerPage() {
               onInstanceDeleted={handleInstanceDeleted}
               onInstanceConnected={handleInstanceConnected}
               onInstanceDisconnected={handleInstanceDisconnected}
+              qrCodeSize={64}
             />
           ) : (
             <div

@@ -33,6 +33,7 @@ interface InstanceControllerProps {
   onThemeChange?: (theme: "light" | "dark") => void;
   className?: string;
   style?: React.CSSProperties;
+  qrCodeSize?: number;
 }
 
 export const InstanceController: React.FC<InstanceControllerProps> = ({
@@ -48,6 +49,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
   onThemeChange,
   className = "w-full md:w-1/2 flex justify-center items-center p-4 h-screen md:h-auto",
   style,
+  qrCodeSize,
 }) => {
   const {
     instances,
@@ -331,6 +333,7 @@ export const InstanceController: React.FC<InstanceControllerProps> = ({
         onSettings={() => setShowSettingsModal(true)}
         hideDeleteButton={hideDeleteButton}
         theme={theme}
+        qrCodeSize={qrCodeSize}
       />
     ),
     [InstanceState.DISCONNECTED]: (

@@ -24,6 +24,7 @@ interface InstanceCardProps {
   onSettings?: (instanceName: string) => void;
   hideDeleteButton?: boolean;
   theme?: "light" | "dark";
+  qrCodeSize?: number;
 }
 
 export const InstanceCard: React.FC<InstanceCardProps> = ({
@@ -34,6 +35,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
   onSettings,
   hideDeleteButton = true,
   theme = "light",
+  qrCodeSize = 64,
 }) => {
   const isDark = theme === "dark";
   const getStatusInfo = () => {
@@ -152,7 +154,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
               <img
                 src={instance.qrCode}
                 alt="QR Code para conectar WhatsApp"
-                className="w-32 h-32"
+                className={`size-${qrCodeSize}`}
               />
             </div>
             <p
